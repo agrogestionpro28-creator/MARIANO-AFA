@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AFA — Gestor de Precios</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{--g:#2EAA6E;--gd:#1d7a4e;--gl:#e8f7f0;--gm:#c2ebd6;--g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g600:#4b5563;--g800:#1f2937;--sh:0 4px 24px rgba(46,170,110,.10);--shl:0 8px 40px rgba(46,170,110,.18);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Barlow',sans-serif;background:var(--g50);min-height:100vh;color:var(--g800);}
+
+  header{background:var(--g);padding:13px 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.15);}
+  .ht h1{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:19px;color:white;letter-spacing:.5px;line-height:1;}
+  .ht p{font-size:10px;color:rgba(255,255,255,.75);margin-top:2px;font-weight:500;letter-spacing:1px;text-transform:uppercase;}
+  .ha{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap;}
+  .bh{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:white;padding:7px 13px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+  .bh:hover{background:rgba(255,255,255,.25);}
+  .bh.active{background:white;color:var(--g);}
+  .bh.sync{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.5);}
+
+  main{max-width:960px;margin:0 auto;padding:18px 13px 140px;}
+
+  /* SYNC BANNER */
+  #syncBanner{background:var(--gl);border:1.5px solid var(--gm);border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--gd);}
+  #syncBanner.hidden{display:none;}
+  #syncBanner strong{font-weight:700;}
+
+  .sw{position:relative;margin-bottom:12px;}
+  .si{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--g);font-size:17px;pointer-events:none;}
+  #si{width:100%;padding:13px 13px 13px 46px;border:2px solid var(--gm);border-radius:12px;font-size:16px;font-family:'Barlow',sans-serif;background:white;color:var(--g800);outline:none;transition:all .2s;box-shadow:var(--sh);}
+  #si:focus{border-color:var(--g);box-shadow:var(--shl);}
+  #si::placeholder{color:var(--g400);}
+
+  .cfs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;}
+  .cb{padding:5px 11px;border-radius:20px;border:1.5px solid var(--gm);background:white;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:12px;color:var(--g600);cursor:pointer;transition:all .2s;}
+  .cb:hover{border-color:var(--g);color:var(--g);}
+  .cb.active{background:var(--g);color:white;border-color:var(--g);}
+
+  .rc{font-size:12px;color:var(--g400);margin-bottom:9px;padding-left:2px;}
+  #pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:11px;}
+
+  .pc{background:white;border-radius:13px;border:1.5px solid var(--gm);padding:15px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+  .pc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--g);border-radius:4px 0 0 4px;}
+  .pc:hover{border-color:var(--g);box-shadow:var(--shl);transform:translateY(-2px);}
+  .pc.sel{border-color:var(--g);background:var(--gl);box-shadow:var(--shl);}
+  .cc{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--g);margin-bottom:3px;}
+  .cn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;color:var(--g800);line-height:1.15;margin-bottom:7px;}
+  .cp{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--g);line-height:1;}
+  .cu{font-size:11px;color:var(--g400);margin-top:2px;}
+  .cid{font-size:9px;color:var(--g400);margin-top:5px;font-family:monospace;}
+
+  /* PREVIEW */
+  #pp{display:none;position:fixed;bottom:0;left:0;right:0;background:white;border-top:2px solid var(--gm);padding:15px 18px;z-index:200;box-shadow:0 -8px 40px rgba(0,0,0,.12);}
+  .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .pt{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;color:var(--g800);}
+  .bcl2{background:var(--g100);border:none;width:29px;height:29px;border-radius:7px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--g600);}
+  .pi{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;}
+  #wc{background:var(--g);border-radius:13px;padding:16px 20px;min-width:270px;flex:1;color:white;position:relative;overflow:hidden;}
+  #wc::after{content:'';position:absolute;top:-25px;right:-25px;width:80px;height:80px;background:rgba(255,255,255,.06);border-radius:50%;}
+  .wla{display:flex;align-items:center;gap:8px;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,.2);padding-bottom:9px;}
+  .wo{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;opacity:.85;}
+  .wpr{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;line-height:1;margin-bottom:3px;}
+  .wd{font-size:12px;opacity:.75;margin-bottom:10px;}
+  .wrow{display:flex;align-items:baseline;gap:4px;}
+  .wc2{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;opacity:.8;}
+  .wpr2{font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:800;line-height:1;}
+  .wu{font-size:12px;opacity:.7;margin-top:2px;}
+  .wdate{font-size:10px;opacity:.55;margin-top:9px;border-top:1px solid rgba(255,255,255,.15);padding-top:7px;}
+  #ct{background:var(--g50);border:1px solid var(--g200);border-radius:9px;padding:10px 13px;font-size:12px;color:var(--g800);flex:1;min-width:190px;line-height:1.7;white-space:pre-wrap;font-family:'Barlow',sans-serif;}
+  .ab{display:flex;gap:8px;margin-top:10px;}
+  .ba{flex:1;padding:10px;border-radius:9px;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;}
+  .bcp{background:var(--gl);color:var(--gd);border:1.5px solid var(--gm);}
+  .bcp:hover{background:var(--gm);}
+  .bcp.copied{background:var(--g);color:white;}
+  .bss{background:var(--g);color:white;}
+  .bss:hover{background:var(--gd);}
+
+  /* MODAL NUEVO / EDITAR PRODUCTO */
+  #prodModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;align-items:center;justify-content:center;padding:14px;}
+  #prodModal.open{display:flex;}
+  .mb{background:white;border-radius:17px;padding:22px;width:100%;max-width:440px;box-shadow:var(--shl);}
+  .mb h2{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:var(--g800);margin-bottom:16px;}
+  .fg{margin-bottom:12px;}
+  .fg label{display:block;font-size:11px;font-weight:700;color:var(--g600);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;}
+  .fg input,.fg select{width:100%;padding:9px 12px;border:1.5px solid var(--g200);border-radius:9px;font-size:15px;font-family:'Barlow',sans-serif;outline:none;color:var(--g800);transition:border-color .2s;}
+  .fg input:focus,.fg select:focus{border-color:var(--g);}
+  .ma{display:flex;gap:9px;margin-top:16px;}
+  .bcn{flex:1;padding:10px;border:1.5px solid var(--g200);border-radius:9px;background:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;cursor:pointer;color:var(--g600);}
+  .bsv{flex:2;padding:10px;border:none;border-radius:9px;background:var(--g);color:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;cursor:pointer;}
+  .bsv:hover{background:var(--gd);}
+  .bdel{padding:10px 14px;border:none;border-radius:9px;background:#fee2e2;color:#dc2626;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;cursor:pointer;}
+  .bdel:hover{background:#fca5a5;}
+
+  /* EDIT LIST VIEW */
+  .elh{display:grid;grid-template-columns:1fr 130px 85px 60px auto;gap:5px;padding:0 11px;margin-bottom:3px;}
+  .elh span{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--g400);}
+  .ei{display:grid;grid-template-columns:1fr 130px 85px 60px auto;gap:5px;align-items:center;background:white;border:1.5px solid var(--g200);border-radius:9px;padding:7px 11px;margin-bottom:5px;}
+  .ei input{padding:5px 7px;border:1px solid var(--g200);border-radius:6px;font-size:12px;font-family:'Barlow',sans-serif;outline:none;width:100%;color:var(--g800);}
+  .ei input:focus{border-color:var(--g);}
+  .bde{background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .bde:hover{background:#fca5a5;}
+  .bap{background:var(--gl);border:2px dashed var(--gm);border-radius:9px;padding:10px;width:100%;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:var(--g);cursor:pointer;margin-top:3px;}
+  .bap:hover{background:var(--gm);}
+  .bsl{background:var(--g);color:white;border:none;border-radius:11px;padding:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;cursor:pointer;margin-top:10px;width:100%;}
+  .bsl:hover{background:var(--gd);}
+
+  #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--g800);color:white;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;opacity:0;transition:all .3s;z-index:500;pointer-events:none;white-space:nowrap;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .es{text-align:center;padding:45px 20px;color:var(--g400);grid-column:1/-1;}
+  .es .em{font-size:38px;margin-bottom:8px;}
+
+  /* MULTI SELECT */
+  .pc.msel{border-color:var(--g);background:var(--gl);}
+  .pc.msel::after{content:'✓';position:absolute;top:8px;right:10px;background:var(--g);color:white;border-radius:50%;width:20px;height:20px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:20px;text-align:center;}
+  #multiBar{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--g800);padding:12px 18px;z-index:200;box-shadow:0 -4px 20px rgba(0,0,0,.2);}
+  #multiBar.show{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  #multiCount{color:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;flex:1;}
+  .bmb{padding:9px 16px;border-radius:9px;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+  .bmb-img{background:var(--g);color:white;}
+  .bmb-img:hover{background:var(--gd);}
+  .bmb-txt{background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);}
+  .bmb-txt:hover{background:rgba(255,255,255,.25);}
+  .bmb-clr{background:transparent;color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2);font-size:12px;padding:7px 12px;}
+
+  /* TARJETA MULTI (oculta, para captura) */
+  #multiCard{position:fixed;left:-9999px;top:0;background:var(--g);border-radius:16px;padding:20px 24px;width:340px;color:white;}
+  .mc-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,.2);padding-bottom:10px;}
+  .mc-org{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;opacity:.85;}
+  .mc-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;margin-bottom:10px;}
+  .mc-row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.1);}
+  .mc-row:last-child{border-bottom:none;}
+  .mc-name{font-size:13px;font-weight:600;flex:1;margin-right:8px;line-height:1.3;}
+  .mc-price{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;white-space:nowrap;}
+  .mc-unit{font-size:10px;opacity:.65;text-align:right;margin-top:1px;}
+  .mc-date{font-size:10px;opacity:.5;margin-top:12px;border-top:1px solid rgba(255,255,255,.15);padding-top:8px;}
+
+  /* FAB nuevo producto */
+  #fab{position:fixed;bottom:20px;right:20px;background:var(--g);color:white;border:none;border-radius:50%;width:52px;height:52px;font-size:24px;cursor:pointer;box-shadow:var(--shl);z-index:150;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+  #fab:hover{background:var(--gd);transform:scale(1.08);}
+  /* Modo multi: bajar FAB */
+  body.multimode #fab{bottom:80px;}
+
+  @media(max-width:580px){
+    #pg{grid-template-columns:1fr 1fr;}
+    .elh{display:none;}
+    .ei{grid-template-columns:1fr 75px auto;}
+    .ei input:nth-child(2),.ei input:nth-child(4){display:none;}
+    .pi{flex-direction:column;}
+    #wc{min-width:unset;width:100%;}
+    .ha .bh:nth-child(2){display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <svg width="42" height="42" viewBox="0 0 52 52" fill="none">
+    <rect width="52" height="52" rx="8" fill="rgba(255,255,255,0.15)"/>
+    <path d="M4 40 L11 16 L14 16 L17 28 L14 28 L12.5 22 L11 28 L8 28 Z" fill="white"/>
+    <polygon points="8,40 11,30 14,30 17,40" fill="white"/>
+    <polygon points="10.5,22 12.5,16 14.5,22" fill="#1d7a4e"/>
+    <rect x="20" y="16" width="3" height="24" fill="white"/>
+    <rect x="20" y="16" width="10" height="3" fill="white"/>
+    <rect x="20" y="26" width="8" height="3" fill="white"/>
+    <path d="M35 40 L42 16 L45 16 L48 40 Z" fill="white"/>
+    <rect x="37" y="30" width="8" height="3" fill="white"/>
+    <polygon points="39.5,22 42,16 44.5,22" fill="#1d7a4e"/>
+  </svg>
+  <div class="ht">
+    <h1>GESTOR DE PRECIOS</h1>
+    <p>Agricultores Federados Argentinos</p>
+  </div>
+  <div class="ha">
+    <button class="bh active" id="btnVer" onclick="showView('ver')">Ver Precios</button>
+    <button class="bh sync" onclick="syncGmail()">📧 Sincronizar Gmail</button>
+    <button class="bh" id="btnEd" onclick="showView('editar')">Editar lista</button>
+  </div>
+</header>
+
+<main>
+  <!-- VER -->
+  <div id="vVer">
+    <div id="syncBanner" class="hidden"></div>
+    <div class="sw"><span class="si">🔍</span><input id="si" type="text" placeholder="Buscar... ej: urea, glifosato, silo bolsa" oninput="rg()"></div>
+    <div class="cfs" id="cfs"></div>
+    <div class="rc" id="rc"></div>
+    <div id="pg"></div>
+  </div>
+
+  <!-- EDITAR -->
+  <div id="vEd" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;margin-bottom:12px;">
+      <div>
+        <h2 style="font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;">Lista de Productos</h2>
+        <p style="font-size:11px;color:var(--g400);margin-top:2px;">Hacé clic en cualquier campo para editar. Guardá al terminar.</p>
+      </div>
+      <button class="bap" style="width:auto;margin:0;padding:7px 16px;" onclick="openNewProd()">+ Nuevo producto</button>
+    </div>
+    <div class="elh"><span>Producto</span><span>Categoría</span><span>Precio USD</span><span>Unidad</span><span></span></div>
+    <div id="elg"></div>
+    <button class="bap" onclick="openNewProd()">+ Nuevo producto</button>
+    <button class="bsl" onclick="saveL()">✓ Guardar cambios</button>
+  </div>
+</main>
+
+<!-- PREVIEW PANEL -->
+<div id="pp">
+  <div class="ph">
+    <div class="pt" id="ptt">Vista previa</div>
+    <button class="bcl2" onclick="closePrev()">✕</button>
+  </div>
+  <div class="pi">
+    <div id="wc">
+      <div class="wla">
+        <svg width="22" height="22" viewBox="0 0 52 52" fill="none">
+          <path d="M4 40 L11 16 L14 16 L17 28 L14 28 L12.5 22 L11 28 L8 28 Z" fill="white"/>
+          <polygon points="8,40 11,30 14,30 17,40" fill="white"/>
+          <polygon points="10.5,22 12.5,16 14.5,22" fill="#1d7a4e"/>
+          <rect x="20" y="16" width="3" height="24" fill="white"/>
+          <rect x="20" y="16" width="10" height="3" fill="white"/>
+          <rect x="20" y="26" width="8" height="3" fill="white"/>
+          <path d="M35 40 L42 16 L45 16 L48 40 Z" fill="white"/>
+          <rect x="37" y="30" width="8" height="3" fill="white"/>
+          <polygon points="39.5,22 42,16 44.5,22" fill="#1d7a4e"/>
+        </svg>
+        <span class="wo">Agricultores Federados Argentinos</span>
+      </div>
+      <div class="wpr" id="wpr">PRODUCTO</div>
+      <div class="wd" id="wdd">Categoría · unidad</div>
+      <div class="wrow"><span class="wc2">USD</span><span class="wpr2" id="wpr2">0.00</span></div>
+      <div class="wu" id="wuu">por unidad</div>
+      <div class="wdate" id="wdt">📅 Actualizado hoy</div>
+    </div>
+    <div style="flex:1;min-width:180px;">
+      <div id="ct"></div>
+      <div class="ab">
+        <button class="ba bcp" id="bcp" onclick="cpTxt()">📋 Copiar texto</button>
+        <button class="ba bss" id="btnImg" onclick="downloadCard()">📸 Guardar imagen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVO / EDITAR PRODUCTO -->
+<div id="prodModal">
+  <div class="mb">
+    <h2 id="modalTitle">Nuevo Producto</h2>
+    <input type="hidden" id="mId">
+    <div class="fg"><label>Nombre del producto</label><input id="mName" placeholder="Ej: Glifosato 66,2%"></div>
+    <div class="fg"><label>Categoría</label>
+      <select id="mCat">
+        <option>Herbicidas</option>
+        <option>Fertilizantes</option>
+        <option>Insecticidas</option>
+        <option>Fungicidas</option>
+        <option>Aceites/Coadyuvantes</option>
+        <option>Inoculantes</option>
+        <option>Silos Bolsa</option>
+        <option>Semillas</option>
+        <option>Otros</option>
+      </select>
+    </div>
+    <div class="fg"><label>Precio (USD)</label><input id="mPrice" type="number" step="0.0001" placeholder="0.0000"></div>
+    <div class="fg"><label>Unidad</label>
+      <select id="mUnit">
+        <option value="LTS">LTS (litros)</option>
+        <option value="KGS">KGS (kilogramos)</option>
+        <option value="UND">UND (unidad)</option>
+        <option value="BOT">BOT (botella)</option>
+        <option value="VEJ">VEJ</option>
+        <option value="S35">S35 (sobre 350g)</option>
+        <option value="S15">S15 (sobre 150g)</option>
+        <option value="S05">S05 (sobre 50g)</option>
+      </select>
+    </div>
+    <div class="fg"><label>ID Artículo AFA (opcional, para sync automático)</label><input id="mArtId" placeholder="000000000000012345" maxlength="18"></div>
+    <div class="fg" id="fg20b" style="display:none">
+      <label>Precio bidón 20L (se divide por 20 automáticamente)</label>
+      <input id="m20b" type="number" step="0.0001" placeholder="Precio del bidón completo">
+    </div>
+    <div class="ma">
+      <button class="bcn" onclick="closeModal()">Cancelar</button>
+      <button class="bdel" id="btnDel" onclick="delProd()" style="display:none">🗑 Eliminar</button>
+      <button class="bsv" onclick="saveProd()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- FAB -->
+<button id="fab" onclick="openNewProd()" title="Nuevo producto">+</button>
+
+<!-- MULTI SELECT BAR -->
+<div id="multiBar">
+  <span id="multiCount">0 seleccionados</span>
+  <button class="bmb bmb-clr" onclick="clearMulti()">✕ Limpiar</button>
+  <button class="bmb bmb-txt" onclick="copyMultiText()">📋 Copiar texto</button>
+  <button class="bmb bmb-img" onclick="downloadMultiCard()">📸 Guardar imagen</button>
+</div>
+
+<!-- TARJETA MULTI (oculta, usada para captura) -->
+<div id="multiCard">
+  <div class="mc-header">
+    <svg width="22" height="22" viewBox="0 0 52 52" fill="none">
+      <path d="M4 40 L11 16 L14 16 L17 28 L14 28 L12.5 22 L11 28 L8 28 Z" fill="white"/>
+      <polygon points="8,40 11,30 14,30 17,40" fill="white"/>
+      <polygon points="10.5,22 12.5,16 14.5,22" fill="#1d7a4e"/>
+      <rect x="20" y="16" width="3" height="24" fill="white"/>
+      <rect x="20" y="16" width="10" height="3" fill="white"/>
+      <rect x="20" y="26" width="8" height="3" fill="white"/>
+      <path d="M35 40 L42 16 L45 16 L48 40 Z" fill="white"/>
+      <rect x="37" y="30" width="8" height="3" fill="white"/>
+      <polygon points="39.5,22 42,16 44.5,22" fill="#1d7a4e"/>
+    </svg>
+    <span class="mc-org">Agricultores Federados Argentinos</span>
+  </div>
+  <div class="mc-title">📋 Lista de Precios</div>
+  <div id="mcRows"></div>
+  <div class="mc-date" id="mcDate">📅 Precios actualizados al —</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── DATOS ──
+const DP=[
+  {id:"000000000000049352",name:"MSO Fideplus",cat:"Aceites/Coadyuvantes",price:14.0,unit:"LTS"},
+  {id:"000000000000059838",name:"Silicona x 1 Lt",cat:"Aceites/Coadyuvantes",price:36.25,unit:"LTS"},
+  {id:"000000000000065564",name:"Aceite Metilado",cat:"Aceites/Coadyuvantes",price:2.7,unit:"LTS"},
+  {id:"000000000000004887",name:"Solmix (80-20)",cat:"Fertilizantes",price:0.6916,unit:"KGS"},
+  {id:"000000000000035181",name:"Sulfato de Amonio 42%",cat:"Fertilizantes",price:1.45,unit:"LTS"},
+  {id:"000000000000004951",name:"SPS Granel",cat:"Fertilizantes",price:0.4412,unit:"KGS"},
+  {id:"000000000000004953",name:"SPT Granel",cat:"Fertilizantes",price:0.8624,unit:"KGS"},
+  {id:"000000000000004955",name:"Urea Granulada Granel",cat:"Fertilizantes",price:0.9488,unit:"KGS"},
+  {id:"000000000000004966",name:"Sulfato Calcio Escamado Big Bag",cat:"Fertilizantes",price:0.1617,unit:"KGS"},
+  {id:"000000000000004972",name:"Sulfato Calcio Pelletizado Big Bag",cat:"Fertilizantes",price:0.2365,unit:"KGS"},
+  {id:"000000000000041087",name:"Mezcla Química NPS Granel",cat:"Fertilizantes",price:0.9596,unit:"KGS"},
+  {id:"000000000000051234",name:"12-40-0-5-1 Mezcla Química Granel",cat:"Fertilizantes",price:1.073,unit:"KGS"},
+  {id:"000000000000059244",name:"Top Phos 724 Big Bag x 1000 kgs",cat:"Fertilizantes",price:1.166,unit:"KGS"},
+  {id:"000000000000078176",name:"Foszinc 45 Granel (12-45-0-5S-1Zn)",cat:"Fertilizantes",price:1.0676,unit:"KGS"},
+  {id:"000000000000066479",name:"Cletodim 24%",cat:"Herbicidas",price:7.5004,unit:"LTS"},
+  {id:"000000000000005320",name:"Heat 70% x 350 Grs",cat:"Herbicidas",price:111.65,unit:"S35"},
+  {id:"000000000000005357",name:"Convey 33,6% x 1 Lt",cat:"Herbicidas",price:363.0,unit:"LTS"},
+  {id:"000000000000005362",name:"Finesse x 150 Grs",cat:"Herbicidas",price:39.6,unit:"S15"},
+  {id:"000000000000005388",name:"Tocon x 1 Lt",cat:"Herbicidas",price:105.6,unit:"LTS"},
+  {id:"000000000000005426",name:"Nisshin SC 4%",cat:"Herbicidas",price:12.65,unit:"LTS"},
+  {id:"000000000000035182",name:"Glifosato 66,2%",cat:"Herbicidas",price:5.0103,unit:"LTS",raw20b:100.2064},
+  {id:"000000000000039556",name:"Atrazina 50%",cat:"Herbicidas",price:3.41,unit:"LTS"},
+  {id:"000000000000043650",name:"Flurocloridona Rainbow",cat:"Herbicidas",price:16.5,unit:"LTS"},
+  {id:"000000000000044016",name:"Sulfentrazone 50%",cat:"Herbicidas",price:18.53,unit:"LTS"},
+  {id:"000000000000046327",name:"Imazetapir 10%",cat:"Herbicidas",price:5.44,unit:"LTS"},
+  {id:"000000000000051565",name:"Metsulfuron 60 x 50 Grs",cat:"Herbicidas",price:2.05,unit:"S05"},
+  {id:"000000000000052689",name:"Cletodim 24% (alt)",cat:"Herbicidas",price:7.5004,unit:"LTS"},
+  {id:"000000000000053533",name:"Paraquat 27,6%",cat:"Herbicidas",price:3.4503,unit:"LTS"},
+  {id:"000000000000055412",name:"S-Metolaclor",cat:"Herbicidas",price:6.6,unit:"LTS"},
+  {id:"000000000000055621",name:"Dicamba",cat:"Herbicidas",price:9.6,unit:"LTS"},
+  {id:"000000000000055751",name:"Mayoral",cat:"Herbicidas",price:36.3,unit:"LTS"},
+  {id:"000000000000056896",name:"2,4D Cleaspray EHE",cat:"Herbicidas",price:4.9003,unit:"LTS"},
+  {id:"000000000000058001",name:"2,4D EHE",cat:"Herbicidas",price:4.9003,unit:"LTS"},
+  {id:"000000000000059199",name:"Atrazina 90",cat:"Herbicidas",price:5.7003,unit:"KGS"},
+  {id:"000000000000060144",name:"Dicamba 57,8%",cat:"Herbicidas",price:7.7,unit:"LTS"},
+  {id:"000000000000062138",name:"Picloram 24%",cat:"Herbicidas",price:7.7,unit:"LTS"},
+  {id:"000000000000064326",name:"Poptryn x 20 Lts",cat:"Herbicidas",price:7.59,unit:"LTS"},
+  {id:"000000000000069503",name:"Haloxifop 54%",cat:"Herbicidas",price:19.91,unit:"LTS"},
+  {id:"000000000000070496",name:"Mesoflex (Mesotrione 48%)",cat:"Herbicidas",price:38.5,unit:"LTS"},
+  {id:"000000000000072135",name:"2,4D Empiric Fusion",cat:"Herbicidas",price:4.95,unit:"LTS"},
+  {id:"000000000000075640",name:"Flumioxazin",cat:"Herbicidas",price:18.1715,unit:"LTS"},
+  {id:"000000000000076785",name:"Terbutilazina",cat:"Herbicidas",price:6.38,unit:"LTS"},
+  {id:"000000000000078349",name:"2,4D Deferon Hexil x 20 Lts",cat:"Herbicidas",price:5.06,unit:"LTS"},
+  {id:"000000000000078722",name:"Fidemax 2.4D ME 30%",cat:"Herbicidas",price:3.64,unit:"LTS",raw20b:72.8},
+  {id:"000000000000079231",name:"Inoculante Soja",cat:"Inoculantes",price:30.0014,unit:"VEJ"},
+  {id:"000000000000005127",name:"Maxim XL x 1 Lt",cat:"Fungicidas",price:49.5,unit:"LTS"},
+  {id:"000000000000048081",name:"Azoxi 20%-Cipro 8%",cat:"Fungicidas",price:13.5908,unit:"LTS"},
+  {id:"000000000000073867",name:"Curasemillas Difimet",cat:"Fungicidas",price:17.8002,unit:"LTS"},
+  {id:"000000000000076587",name:"Cronos XL x 1 Lt",cat:"Fungicidas",price:49.5,unit:"LTS"},
+  {id:"000000000000039044",name:"Lambdacialotrina 5%",cat:"Insecticidas",price:6.9901,unit:"LTS"},
+  {id:"000000000000044804",name:"Imida 20%-Lambda 10%",cat:"Insecticidas",price:15.4,unit:"LTS"},
+  {id:"000000000000053593",name:"Bifentrin 10%",cat:"Insecticidas",price:7.1903,unit:"LTS"},
+  {id:"000000000000056016",name:"Imidacloprid 60%",cat:"Insecticidas",price:18.7,unit:"LTS"},
+  {id:"000000000000058794",name:"Imidacloprid 35%",cat:"Insecticidas",price:13.7304,unit:"LTS"},
+  {id:"000000000000066501",name:"Extra Tackle Polvo x 30 Kg",cat:"Insecticidas",price:308.448,unit:"UND"},
+  {id:"000000000000070880",name:"Tuckson x 20 Lts",cat:"Insecticidas",price:35.805,unit:"LTS"},
+  {id:"000000000000073251",name:"Fidemax Delta BPO x 20 Lts",cat:"Insecticidas",price:17.4003,unit:"LTS"},
+  {id:"000000000000078413",name:"Transform x 2 kg",cat:"Insecticidas",price:490.6,unit:"BOT"},
+  {id:"000000000000079228",name:"Clorantra 20%",cat:"Insecticidas",price:48.0018,unit:"LTS"},
+  {id:"000000000000079914",name:"Lambda 25% Largin CS x Lt",cat:"Insecticidas",price:16.72,unit:"LTS"},
+  {id:"000000000000080261",name:"Lambda 25% Aikido 25 x 1 Lt",cat:"Insecticidas",price:16.72,unit:"LTS"},
+  {id:"000000000000080331",name:"Aranya 3.6 x 5 Lts",cat:"Insecticidas",price:13.44,unit:"LTS"},
+  {id:"000000000000005027",name:"Silo Bolsa Ipesa 9x60 Ref",cat:"Silos Bolsa",price:280.5,unit:"UND"},
+  {id:"000000000000005028",name:"Silo Bolsa Ipesa 9x75 Ref",cat:"Silos Bolsa",price:341.0,unit:"UND"},
+  {id:"000000000000005032",name:"Silo Bolsa Ipesa 9x100 Ref",cat:"Silos Bolsa",price:462.0,unit:"UND"},
+  {id:"000000000000080087",name:"SILOX 9x60 Ref",cat:"Silos Bolsa",price:269.5,unit:"UND"},
+];
+
+let prods=JSON.parse(localStorage.getItem('afa4')||'null')||DP;
+let sel=null,actCat='Todos',nid=9000001;
+let lastSync=localStorage.getItem('afa4_lastsync')||null;
+let multiSel=new Set(); // IDs seleccionados para tarjeta múltiple
+
+const sv=()=>localStorage.setItem('afa4',JSON.stringify(prods));
+const fmt=n=>Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:4});
+const today=()=>new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+function toast(m,dur=2400){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),dur);}
+
+// ── SYNC GMAIL — este botón avisa al usuario que debe pedirle a Claude ──
+function syncGmail(){
+  // Muestra el banner con instrucción para decirle a Claude
+  const b=document.getElementById('syncBanner');
+  b.innerHTML='📧 <strong>Para sincronizar:</strong> escribile a Claude en el chat: <em>"sincronizar precios desde Gmail"</em> y actualizará automáticamente.';
+  b.classList.remove('hidden');
+  setTimeout(()=>b.classList.add('hidden'),6000);
+}
+
+// ── FUNCIÓN PÚBLICA para que Claude actualice precios desde afuera ──
+window.afaUpdatePrices=function(updates){
+  // updates = [{id, price, raw20b?, name?}]
+  const updated=[], notFound=[];
+  for(const u of updates){
+    const normId=String(u.id).padStart(18,'0');
+    const p=prods.find(p=>p.id===normId||p.id.replace(/^0+/,'')===String(u.id).replace(/^0+/,''));
+    if(p){
+      p.price=+Number(u.price).toFixed(4);
+      if(u.raw20b) p.raw20b=+Number(u.raw20b).toFixed(4);
+      updated.push(p.name);
+    } else {
+      notFound.push(u.name||u.id);
+    }
+  }
+  if(updated.length){
+    sv();
+    lastSync=today();
+    localStorage.setItem('afa4_lastsync',lastSync);
+    rg();
+    rcats();
+  }
+  return {updated, notFound};
+};
+
+// ── CATEGORÍAS ──
+function rcats(){
+  const cats=['Todos',...new Set(prods.map(p=>p.cat).sort())];
+  document.getElementById('cfs').innerHTML=cats.map(c=>`<button class="cb ${actCat===c?'active':''}" onclick="fcat('${c}')">${c}</button>`).join('');
+}
+function fcat(c){actCat=c;rcats();rg();}
+
+// ── VISTAS ──
+function showView(v){
+  document.getElementById('vVer').style.display=v==='ver'?'block':'none';
+  document.getElementById('vEd').style.display=v==='editar'?'block':'none';
+  document.getElementById('btnVer').classList.toggle('active',v==='ver');
+  document.getElementById('btnEd').classList.toggle('active',v==='editar');
+  document.getElementById('fab').style.display=v==='ver'?'flex':'none';
+  if(v==='editar'){closePrev();rel();}
+  if(v==='ver'){rcats();rg();}
+}
+
+// ── GRID ──
+function rg(){
+  const q=document.getElementById('si').value.trim().toLowerCase();
+  let f=prods;
+  if(actCat!=='Todos')f=f.filter(p=>p.cat===actCat);
+  if(q)f=f.filter(p=>p.name.toLowerCase().includes(q)||p.cat.toLowerCase().includes(q));
+  document.getElementById('rc').textContent=(q||actCat!=='Todos')?`${f.length} resultado${f.length!==1?'s':''}`:`${prods.length} productos · ${lastSync?'Última sync: '+lastSync:'Sin sync aún'}`;
+  const g=document.getElementById('pg');
+  if(!f.length){g.innerHTML=`<div class="es"><div class="em">🌱</div><p>Sin resultados para "<strong>${q}</strong>"</p></div>`;return;}
+  g.innerHTML=f.map(p=>`<div class="pc ${sel?.id===p.id?'sel':''} ${multiSel.has(p.id)?'msel':''}" 
+    id="pc_${p.id}"
+    onclick="handleCardClick('${p.id}')"
+    ontouchstart="startLong('${p.id}')" ontouchend="endLong()" ontouchmove="endLong()"
+    onmousedown="startLong('${p.id}')" onmouseup="endLong()" onmouseleave="endLong()">
+    <div class="cc">${p.cat}</div>
+    <div class="cn">${p.name}</div>
+    <div class="cp">USD ${fmt(p.price)}</div>
+    <div class="cu">por ${p.unit}${p.raw20b?` · bdón 20L: USD ${fmt(p.raw20b)}`:''}</div>
+    <div class="cid">${p.id}</div>
+  </div>`).join('');
+}
+
+// ── LONG PRESS para activar multi-select ──
+let longTimer=null;
+function startLong(id){
+  longTimer=setTimeout(()=>{
+    longTimer=null;
+    toggleMulti(id);
+  },500);
+}
+function endLong(){
+  if(longTimer){clearTimeout(longTimer);longTimer=null;}
+}
+function handleCardClick(id){
+  if(longTimer===null && multiSel.size===0){
+    // modo normal: preview
+    selP(id);
+  } else if(multiSel.size>0){
+    // ya en modo multi: toggle
+    toggleMulti(id);
+  }
+  // si longTimer != null, el long press lo maneja
+}
+function toggleMulti(id){
+  closePrev();
+  if(multiSel.has(id)) multiSel.delete(id);
+  else multiSel.add(id);
+  updateMultiBar();
+  rg();
+}
+function updateMultiBar(){
+  const bar=document.getElementById('multiBar');
+  const n=multiSel.size;
+  if(n>0){
+    bar.classList.add('show');
+    document.getElementById('multiCount').textContent=`${n} producto${n!==1?'s':''} seleccionado${n!==1?'s':''}`;
+    document.body.classList.add('multimode');
+  } else {
+    bar.classList.remove('show');
+    document.body.classList.remove('multimode');
+  }
+}
+function clearMulti(){multiSel.clear();updateMultiBar();rg();}
+
+function getMultiProds(){return [...multiSel].map(id=>prods.find(p=>p.id===id)).filter(Boolean);}
+
+function copyMultiText(){
+  const ps=getMultiProds();
+  if(!ps.length)return;
+  const lines=ps.map(p=>`📦 *${p.name}* — USD ${fmt(p.price)} / ${p.unit}`).join('\n');
+  const txt=`━━━━━━━━━━━━━━━━━━━━\n🌾 *AFA — Agricultores Federados Argentinos*\n━━━━━━━━━━━━━━━━━━━━\n${lines}\n📅 Precios al ${today()}\n━━━━━━━━━━━━━━━━━━━━`;
+  navigator.clipboard.writeText(txt).then(()=>toast(`✓ ${ps.length} precios copiados`));
+}
+
+function downloadMultiCard(){
+  const ps=getMultiProds();
+  if(!ps.length)return;
+  // Construir tarjeta oculta
+  document.getElementById('mcRows').innerHTML=ps.map(p=>`
+    <div class="mc-row">
+      <div>
+        <div class="mc-name">${p.name}</div>
+        <div class="mc-unit">por ${p.unit}</div>
+      </div>
+      <div class="mc-price">USD ${fmt(p.price)}</div>
+    </div>`).join('');
+  document.getElementById('mcDate').textContent=`📅 Precios actualizados al ${today()}`;
+  const card=document.getElementById('multiCard');
+  // Mover a posición visible para captura
+  card.style.left='0px';
+  card.style.top='0px';
+  card.style.position='absolute';
+  card.style.zIndex='-1';
+  const btn=document.querySelector('.bmb-img');
+  btn.textContent='⏳ Generando...';
+  btn.disabled=true;
+  setTimeout(()=>{
+    html2canvas(card,{scale:3,backgroundColor:'#2EAA6E',useCORS:true,logging:false}).then(canvas=>{
+      card.style.left='-9999px';
+      card.style.position='fixed';
+      canvas.toBlob(blob=>{
+        const file=new File([blob],'precios-afa.png',{type:'image/png'});
+        if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+          navigator.share({files:[file],title:'Precios AFA'})
+            .catch(()=>fallbackDownloadMulti(canvas))
+            .finally(()=>{btn.textContent='📸 Guardar imagen';btn.disabled=false;});
+        } else {
+          fallbackDownloadMulti(canvas);
+          btn.textContent='📸 Guardar imagen';btn.disabled=false;
+        }
+      },'image/png');
+    });
+  },100);
+}
+function fallbackDownloadMulti(canvas){
+  const a=document.createElement('a');
+  a.download=`precios-afa-${today().replace(/\//g,'-')}.png`;
+  a.href=canvas.toDataURL('image/png');
+  a.click();
+  toast('✓ Imagen guardada — compartila desde tu galería');
+}
+
+// ── SELECT PRODUCTO ──
+function selP(id){
+  sel=prods.find(p=>p.id===id);if(!sel)return;
+  rg();
+  document.getElementById('wpr').textContent=sel.name.toUpperCase();
+  document.getElementById('wdd').textContent=`${sel.cat} · por ${sel.unit}`;
+  document.getElementById('wpr2').textContent=fmt(sel.price);
+  document.getElementById('wuu').textContent=`USD por ${sel.unit}`;
+  document.getElementById('wdt').textContent=`📅 Actualizado ${today()}`;
+  document.getElementById('ptt').textContent=sel.name;
+  document.getElementById('ct').textContent=
+`━━━━━━━━━━━━━━━━━━━━
+🌾 *AFA — Agricultores Federados Argentinos*
+━━━━━━━━━━━━━━━━━━━━
+📦 *${sel.name}*
+💲 USD ${fmt(sel.price)} / ${sel.unit}${sel.raw20b?`\n📦 Bidón 20L: USD ${fmt(sel.raw20b)}`:''}
+📅 Precio actualizado al ${today()}
+━━━━━━━━━━━━━━━━━━━━`;
+  document.getElementById('pp').style.display='block';
+  const b=document.getElementById('bcp');b.classList.remove('copied');b.textContent='📋 Copiar texto';
+}
+
+function closePrev(){document.getElementById('pp').style.display='none';sel=null;rg();}
+function cpTxt(){
+  navigator.clipboard.writeText(document.getElementById('ct').textContent).then(()=>{
+    const b=document.getElementById('bcp');b.textContent='✓ Copiado!';b.classList.add('copied');
+    toast('✓ Texto copiado');
+    setTimeout(()=>{b.textContent='📋 Copiar texto';b.classList.remove('copied');},2500);
+  });
+}
+function downloadCard(){
+  const btn=document.getElementById('btnImg');
+  btn.textContent='⏳ Generando...';
+  btn.disabled=true;
+  const card=document.getElementById('wc');
+  html2canvas(card,{
+    scale:3,
+    backgroundColor:null,
+    useCORS:true,
+    logging:false
+  }).then(canvas=>{
+    // Intentar compartir nativo (móvil)
+    canvas.toBlob(blob=>{
+      const file=new File([blob],'precio-afa.png',{type:'image/png'});
+      if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+        navigator.share({files:[file],title:'Precio AFA'})
+          .then(()=>{btn.textContent='📸 Guardar imagen';btn.disabled=false;})
+          .catch(()=>fallbackDownload(canvas,btn));
+      } else {
+        fallbackDownload(canvas,btn);
+      }
+    },'image/png');
+  }).catch(()=>{
+    btn.textContent='📸 Guardar imagen';
+    btn.disabled=false;
+    toast('Error al generar la imagen');
+  });
+}
+
+function fallbackDownload(canvas,btn){
+  const a=document.createElement('a');
+  a.download=`precio-afa-${sel?.name?.replace(/\s+/g,'-').toLowerCase()||'producto'}.png`;
+  a.href=canvas.toDataURL('image/png');
+  a.click();
+  btn.textContent='✓ Imagen descargada';
+  btn.style.background='#1d7a4e';
+  toast('✓ Imagen guardada — compartila desde tu galería');
+  setTimeout(()=>{btn.textContent='📸 Guardar imagen';btn.style.background='';btn.disabled=false;},2500);
+}
+
+// ── MODAL NUEVO / EDITAR ──
+let editingId=null;
+function openNewProd(){
+  editingId=null;
+  document.getElementById('modalTitle').textContent='Nuevo Producto';
+  document.getElementById('mId').value='';
+  document.getElementById('mName').value='';
+  document.getElementById('mCat').value='Herbicidas';
+  document.getElementById('mPrice').value='';
+  document.getElementById('mUnit').value='LTS';
+  document.getElementById('mArtId').value='';
+  document.getElementById('m20b').value='';
+  document.getElementById('fg20b').style.display='none';
+  document.getElementById('btnDel').style.display='none';
+  document.getElementById('prodModal').classList.add('open');
+  setTimeout(()=>document.getElementById('mName').focus(),100);
+}
+
+function openEditProd(id){
+  const p=prods.find(x=>x.id===id);if(!p)return;
+  editingId=id;
+  document.getElementById('modalTitle').textContent='Editar Producto';
+  document.getElementById('mName').value=p.name;
+  document.getElementById('mCat').value=p.cat;
+  document.getElementById('mPrice').value=p.price;
+  document.getElementById('mUnit').value=p.unit;
+  document.getElementById('mArtId').value=p.id||'';
+  document.getElementById('m20b').value=p.raw20b||'';
+  document.getElementById('fg20b').style.display=p.raw20b?'block':'none';
+  document.getElementById('btnDel').style.display='block';
+  document.getElementById('prodModal').classList.add('open');
+}
+
+function closeModal(){document.getElementById('prodModal').classList.remove('open');}
+
+function saveProd(){
+  const name=document.getElementById('mName').value.trim();
+  const price=parseFloat(document.getElementById('mPrice').value);
+  if(!name){toast('Ingresá un nombre');return;}
+  if(isNaN(price)){toast('Ingresá un precio válido');return;}
+  const artId=document.getElementById('mArtId').value.trim().padStart(18,'0')||String(nid++).padStart(18,'0');
+  const raw20b=parseFloat(document.getElementById('m20b').value)||undefined;
+  const obj={
+    id:artId,
+    name,
+    cat:document.getElementById('mCat').value,
+    price:+price.toFixed(4),
+    unit:document.getElementById('mUnit').value,
+    ...(raw20b?{raw20b:+raw20b.toFixed(4)}:{})
+  };
+  if(editingId){
+    const idx=prods.findIndex(p=>p.id===editingId);
+    if(idx>=0)prods[idx]=obj;
+  } else {
+    prods.push(obj);
+  }
+  sv();closeModal();
+  if(document.getElementById('vEd').style.display!=='none')rel();
+  else{rcats();rg();}
+  toast(editingId?'✓ Producto actualizado':'✓ Producto agregado');
+}
+
+function delProd(){
+  if(!editingId)return;
+  if(!confirm('¿Eliminar este producto?'))return;
+  prods=prods.filter(p=>p.id!==editingId);
+  sv();closeModal();rel();toast('Producto eliminado');
+}
+
+// ── EDITAR LISTA INLINE ──
+function rel(){
+  document.getElementById('elg').innerHTML=prods.map(p=>`
+    <div class="ei">
+      <input value="${p.name}" oninput="upd('${p.id}','name',this.value)">
+      <input value="${p.cat}" oninput="upd('${p.id}','cat',this.value)">
+      <input type="number" step="0.0001" value="${p.price}" oninput="upd('${p.id}','price',+this.value)">
+      <input value="${p.unit}" oninput="upd('${p.id}','unit',this.value)">
+      <button class="bde" onclick="openEditProd('${p.id}')" title="Editar">✏️</button>
+    </div>`).join('');
+}
+function upd(id,f,v){const p=prods.find(p=>p.id===id);if(p)p[f]=v;}
+function saveL(){sv();toast('✓ Lista guardada');showView('ver');}
+
+// ── INIT ──
+rcats();rg();
+</script>
+</body>
+</html>
