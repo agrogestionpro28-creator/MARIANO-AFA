@@ -443,6 +443,7 @@ function rg(){
   g.innerHTML=f.map(p=>`<div class="pc ${sel?.id===p.id?'sel':''} ${multiSel.has(p.id)?'msel':''}" 
     id="pc_${p.id}"
     onclick="handleCardClick('${p.id}')"
+    ondblclick="toggleMulti('${p.id}')"
     ontouchstart="startLong('${p.id}')" ontouchend="endLong()" ontouchmove="endLong()"
     onmousedown="startLong('${p.id}')" onmouseup="endLong()" onmouseleave="endLong()">
     <div class="cc">${p.cat}</div>
