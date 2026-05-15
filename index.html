@@ -411,13 +411,12 @@ async function loadProds(){
   rcats();rg();
 }
 
-// ── GUARDAR UN PRODUCTO EN SUPABASE ──
+// ── GUARDAR UN PRODUCTO EN SUPABASE (PATCH = update) ──
 async function sv(p){
   try{
-    await sbFetch('/rest/v1/afa_precios',{
-      method:'POST',
-      headers:{'Prefer':'resolution=merge-duplicates'},
-      body:JSON.stringify({id:p.id,name:p.name,cat:p.cat,price:p.price,unit:p.unit,raw20b:p.raw20b||null,updated_at:new Date().toISOString()})
+    await sbFetch(`/rest/v1/afa_precios?id=eq.${p.id}`,{
+      method:'PATCH',
+      body:JSON.stringify({name:p.name,cat:p.cat,price:p.price,unit:p.unit,raw20b:p.raw20b||null,updated_at:new Date().toISOString()})
     });
   } catch(e){ console.error('Error guardando:',e); }
 }
