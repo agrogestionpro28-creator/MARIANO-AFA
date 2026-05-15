@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AFA — Gestión</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --g:#2EAA6E;--gd:#1d7a4e;--gl:#e8f7f0;--gm:#c2ebd6;
+  --g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;--g300:#d1d5db;
+  --g400:#9ca3af;--g600:#4b5563;--g700:#374151;--g800:#1f2937;
+  --sh:0 2px 12px rgba(0,0,0,.08);--shl:0 8px 32px rgba(0,0,0,.12);
+  --red:#ef4444;--amber:#f59e0b;--blue:#3b82f6;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Barlow',sans-serif;background:var(--g50);color:var(--g800);min-height:100vh;}
+
+/* HEADER */
+header{background:var(--g);padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.15);}
+.hlogo{background:rgba(255,255,255,.18);border-radius:8px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.hlogo span{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;color:white;letter-spacing:-1px;}
+.htxt h1{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;color:white;line-height:1;}
+.htxt p{font-size:10px;color:rgba(255,255,255,.7);margin-top:1px;letter-spacing:.8px;text-transform:uppercase;}
+.hnav{margin-left:auto;display:flex;gap:5px;flex-wrap:wrap;}
+.hn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:white;padding:6px 11px;border-radius:7px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;border:none;}
+.hn:hover{background:rgba(255,255,255,.25);}
+.hn.active{background:white;color:var(--g);}
+.hn.back{background:rgba(0,0,0,.15);color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.2);}
+.hn.back:hover{background:rgba(0,0,0,.25);}
+
+/* MAIN */
+main{max-width:1100px;margin:0 auto;padding:20px 16px 60px;}
+
+/* SECTION TITLE */
+.sec-title{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.sec-title h2{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;color:var(--g800);}
+.sec-title p{font-size:12px;color:var(--g400);margin-top:2px;}
+.sec-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:8px;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:5px;}
+.btn-primary{background:var(--g);color:white;}
+.btn-primary:hover{background:var(--gd);}
+.btn-secondary{background:white;color:var(--g600);border:1.5px solid var(--g200);}
+.btn-secondary:hover{border-color:var(--g);color:var(--g);}
+.btn-danger{background:#fee2e2;color:var(--red);border:1.5px solid #fecaca;}
+.btn-danger:hover{background:#fecaca;}
+.btn-sm{padding:5px 10px;font-size:12px;}
+
+/* SEARCH */
+.search-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.search-box{position:relative;flex:1;min-width:200px;}
+.search-box input{width:100%;padding:9px 9px 9px 36px;border:1.5px solid var(--g200);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;background:white;color:var(--g800);}
+.search-box input:focus{border-color:var(--g);}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--g400);font-size:15px;pointer-events:none;}
+
+/* TABLE */
+.tbl-wrap{background:white;border-radius:12px;border:1.5px solid var(--g200);overflow:hidden;box-shadow:var(--sh);}
+table{width:100%;border-collapse:collapse;}
+th{background:var(--g50);padding:10px 12px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g600);border-bottom:1.5px solid var(--g200);white-space:nowrap;}
+td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--g100);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--g50);}
+.td-num{text-align:right;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;}
+.td-green{color:var(--g);font-weight:700;}
+.td-actions{display:flex;gap:5px;justify-content:flex-end;}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+.modal-bg.open{display:flex;}
+.modal{background:white;border-radius:16px;padding:24px;width:100%;max-width:580px;box-shadow:var(--shl);margin:auto;}
+.modal h2{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:var(--g800);margin-bottom:18px;}
+.fg{margin-bottom:12px;}
+.fg label{display:block;font-size:11px;font-weight:700;color:var(--g600);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;}
+.fg input,.fg select,.fg textarea{width:100%;padding:9px 11px;border:1.5px solid var(--g200);border-radius:8px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;color:var(--g800);transition:border-color .2s;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--g);}
+.fg textarea{resize:vertical;min-height:80px;}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fg-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.modal-footer{display:flex;gap:8px;margin-top:18px;justify-content:flex-end;}
+.sect-divider{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--g);margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--gm);}
+
+/* CARDS RESUMEN */
+.cards-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:18px;}
+.card-stat{background:white;border-radius:11px;border:1.5px solid var(--g200);padding:14px 16px;box-shadow:var(--sh);}
+.card-stat .cs-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--g400);margin-bottom:4px;}
+.card-stat .cs-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;color:var(--g);}
+.card-stat .cs-sub{font-size:11px;color:var(--g400);margin-top:2px;}
+
+/* BADGE */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-green{background:var(--gl);color:var(--gd);}
+.badge-amber{background:#fffbeb;color:#92400e;}
+.badge-red{background:#fee2e2;color:#991b1b;}
+.badge-blue{background:#eff6ff;color:#1e40af;}
+.badge-gray{background:var(--g100);color:var(--g600);}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--g800);color:white;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;z-index:500;pointer-events:none;white-space:nowrap;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:50px 20px;color:var(--g400);}
+.empty-icon{font-size:40px;margin-bottom:10px;}
+
+/* ALERTAS */
+.alert-box{background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#92400e;}
+.alert-box strong{font-weight:700;}
+
+/* PROGRESS BAR */
+.prog-wrap{background:var(--g100);border-radius:20px;height:8px;overflow:hidden;margin-top:4px;}
+.prog-bar{height:100%;border-radius:20px;background:var(--g);transition:width .3s;}
+.prog-bar.over{background:var(--amber);}
+
+/* AGENDA */
+.nota-card{background:white;border-radius:11px;border:1.5px solid var(--g200);padding:14px 16px;margin-bottom:10px;box-shadow:var(--sh);}
+.nota-card .nc-date{font-size:11px;color:var(--g400);margin-bottom:4px;}
+.nota-card .nc-text{font-size:14px;color:var(--g800);line-height:1.5;white-space:pre-wrap;}
+.nota-card .nc-actions{margin-top:8px;display:flex;gap:6px;}
+
+/* PEDIDO CARD */
+.ped-card{background:white;border-radius:11px;border:1.5px solid var(--g200);padding:14px 16px;margin-bottom:10px;box-shadow:var(--sh);}
+.ped-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.ped-cliente{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;color:var(--g800);}
+.ped-date{font-size:11px;color:var(--g400);}
+.ped-items{font-size:13px;color:var(--g600);margin-bottom:6px;}
+.ped-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;}
+
+/* VIEWS */
+.view{display:none;}
+.view.active{display:block;}
+
+/* RESPONSIVE */
+@media(max-width:640px){
+  .fg-row,.fg-row3{grid-template-columns:1fr;}
+  .cards-row{grid-template-columns:1fr 1fr;}
+  table{font-size:12px;}
+  th,td{padding:8px 8px;}
+  .hnav .hn:nth-child(n+4){display:none;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hlogo"><span>AFA</span></div>
+  <div class="htxt">
+    <h1>GESTIÓN</h1>
+    <p>Campaña 2026/2027</p>
+  </div>
+  <div class="hnav">
+    <button class="hn active" onclick="showView('clientes')">👥 Clientes</button>
+    <button class="hn" onclick="showView('pedidos')">📋 Pedidos</button>
+    <button class="hn" onclick="showView('objetivos')">🎯 Objetivos</button>
+    <button class="hn" onclick="showView('agenda')">📌 Agenda</button>
+    <a href="index.html" class="hn back">💰 Precios →</a>
+  </div>
+</header>
+
+<main>
+
+<!-- ═══════════════════════════════════════════
+     CLIENTES
+═══════════════════════════════════════════ -->
+<div id="v-clientes" class="view active">
+  <div class="sec-title">
+    <div>
+      <h2>👥 Clientes</h2>
+      <p>Hectáreas por cultivo — Campaña 2026/2027</p>
+    </div>
+    <div class="sec-actions">
+      <button class="btn btn-secondary btn-sm" onclick="exportClientesXLS()">⬇ Excel</button>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importCli').click()">⬆ Importar</button>
+      <input type="file" id="importCli" accept=".xlsx,.xls" style="display:none" onchange="importClientesXLS(this)">
+      <button class="btn btn-primary" onclick="openClienteModal()">+ Nuevo cliente</button>
+    </div>
+  </div>
+
+  <div class="cards-row" id="cliStats"></div>
+
+  <div class="search-row">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="cliSearch" placeholder="Buscar cliente..." oninput="renderClientes()">
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table id="cliTable">
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th class="td-num">Has Total</th>
+          <th class="td-num">Maíz</th>
+          <th class="td-num">Soja</th>
+          <th class="td-num">Trigo</th>
+          <th class="td-num">Maíz 2da</th>
+          <th class="td-num">Soja 2da</th>
+          <th class="td-num">Sorgo</th>
+          <th class="td-num">Sorgo 2da</th>
+          <th class="td-num">Girasol</th>
+          <th class="td-num">Otros</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="cliBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PEDIDOS
+═══════════════════════════════════════════ -->
+<div id="v-pedidos" class="view">
+  <div class="sec-title">
+    <div>
+      <h2>📋 Pedidos</h2>
+      <p>Registro diario de pedidos</p>
+    </div>
+    <div class="sec-actions">
+      <button class="btn btn-secondary btn-sm" onclick="exportPedidosXLS()">⬇ Excel</button>
+      <button class="btn btn-primary" onclick="openPedidoModal()">+ Nuevo pedido</button>
+    </div>
+  </div>
+
+  <div id="pedAlertas"></div>
+
+  <div class="search-row">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="pedSearch" placeholder="Buscar cliente o producto..." oninput="renderPedidos()">
+    </div>
+    <select id="pedFiltro" onchange="renderPedidos()" style="padding:9px 11px;border:1.5px solid var(--g200);border-radius:9px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;background:white;color:var(--g800);">
+      <option value="">Todos</option>
+      <option value="sin_pago">Sin forma de pago</option>
+      <option value="cosecha">A cosecha</option>
+      <option value="sin_seguro">Cosecha sin seguro</option>
+      <option value="sin_forward">Cosecha sin forward</option>
+    </select>
+  </div>
+
+  <div id="pedList"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     OBJETIVOS
+═══════════════════════════════════════════ -->
+<div id="v-objetivos" class="view">
+  <div class="sec-title">
+    <div>
+      <h2>🎯 Objetivos de Insumos</h2>
+      <p>Campaña 2026/2027 · 1 Mar 2026 — 28 Feb 2027</p>
+    </div>
+    <div class="sec-actions">
+      <button class="btn btn-secondary btn-sm" onclick="exportObjetivosXLS()">⬇ Excel</button>
+      <button class="btn btn-primary" onclick="openObjetivoModal()">+ Nuevo objetivo</button>
+    </div>
+  </div>
+  <div id="objList"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     AGENDA
+═══════════════════════════════════════════ -->
+<div id="v-agenda" class="view">
+  <div class="sec-title">
+    <div><h2>📌 Agenda</h2><p>Notas y recordatorios importantes</p></div>
+    <div class="sec-actions">
+      <button class="btn btn-primary" onclick="openNotaModal()">+ Nueva nota</button>
+    </div>
+  </div>
+  <div id="notaList"></div>
+</div>
+
+</main>
+
+<!-- ═══════════════════════════════════ MODALES ═══════════════════════════════════ -->
+
+<!-- MODAL CLIENTE -->
+<div class="modal-bg" id="modalCliente">
+  <div class="modal">
+    <h2 id="cliModalTitle">Nuevo Cliente</h2>
+    <div class="fg"><label>Nombre del cliente</label><input id="cliNombre" placeholder="Ej: Juan Pérez"></div>
+    <div class="sect-divider">Hectáreas por cultivo</div>
+    <div class="fg-row">
+      <div class="fg"><label>Has Total</label><input type="number" id="cliTotal" placeholder="0"></div>
+      <div class="fg"><label>Maíz</label><input type="number" id="cliMaiz" placeholder="0"></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Soja</label><input type="number" id="cliSoja" placeholder="0"></div>
+      <div class="fg"><label>Trigo</label><input type="number" id="cliTrigo" placeholder="0"></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Maíz 2da</label><input type="number" id="cliMaiz2" placeholder="0"></div>
+      <div class="fg"><label>Soja 2da</label><input type="number" id="cliSoja2" placeholder="0"></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Sorgo</label><input type="number" id="cliSorgo" placeholder="0"></div>
+      <div class="fg"><label>Sorgo 2da</label><input type="number" id="cliSorgo2" placeholder="0"></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Girasol</label><input type="number" id="cliGirasol" placeholder="0"></div>
+      <div class="fg"><label>Otros</label><input type="number" id="cliOtros" placeholder="0"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="cliDelBtn" onclick="deleteCliente()" style="display:none;margin-right:auto">🗑 Eliminar</button>
+      <button class="btn btn-secondary" onclick="closeModal('modalCliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCliente()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PEDIDO -->
+<div class="modal-bg" id="modalPedido">
+  <div class="modal">
+    <h2 id="pedModalTitle">Nuevo Pedido</h2>
+    <div class="fg-row">
+      <div class="fg">
+        <label>Cliente</label>
+        <select id="pedCliente"><option value="">— Seleccionar —</option></select>
+      </div>
+      <div class="fg">
+        <label>Fecha</label>
+        <input type="date" id="pedFecha">
+      </div>
+    </div>
+    <div class="sect-divider">Productos</div>
+    <div id="pedItems"></div>
+    <button class="btn btn-secondary btn-sm" onclick="addPedItem()" style="margin-bottom:12px">+ Agregar producto</button>
+    <div class="fg">
+      <label>Forma de pago</label>
+      <select id="pedPago">
+        <option value="">— Sin definir —</option>
+        <option value="Contado">Contado</option>
+        <option value="Contado canje">Contado canje</option>
+        <option value="U$S Dic (trigo)">U$S Dic (trigo)</option>
+        <option value="U$S Feb (girasol)">U$S Feb (girasol)</option>
+        <option value="U$S Abr (maíz/sorgo)">U$S Abr (maíz/sorgo)</option>
+        <option value="U$S May (soja)">U$S May (soja)</option>
+        <option value="U$S Jul (maíz 2da)">U$S Jul (maíz 2da)</option>
+        <option value="Otra">Otra</option>
+      </select>
+    </div>
+    <div id="cosechaExtra" style="display:none">
+      <div class="sect-divider">Cobertura (pago a cosecha)</div>
+      <div class="fg-row">
+        <div class="fg">
+          <label>¿Tiene seguro?</label>
+          <select id="pedSeguro">
+            <option value="">— Sin definir —</option>
+            <option value="si">✅ Sí tiene seguro</option>
+            <option value="no">❌ No tiene seguro</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>¿Tiene forward?</label>
+          <select id="pedForward">
+            <option value="">— Sin definir —</option>
+            <option value="si">✅ Sí tiene forward</option>
+            <option value="no">❌ No tiene forward</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="fg"><label>Observaciones</label><textarea id="pedObs" placeholder="Notas adicionales..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="pedDelBtn" onclick="deletePedido()" style="display:none;margin-right:auto">🗑 Eliminar</button>
+      <button class="btn btn-secondary btn-sm" onclick="generarImagenPedido()">📸 Imagen</button>
+      <button class="btn btn-secondary" onclick="closeModal('modalPedido')">Cancelar</button>
+      <button class="btn btn-primary" onclick="savePedido()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL OBJETIVO -->
+<div class="modal-bg" id="modalObjetivo">
+  <div class="modal">
+    <h2 id="objModalTitle">Nuevo Objetivo</h2>
+    <div class="fg">
+      <label>Producto</label>
+      <input id="objProd" placeholder="Ej: Urea Granulada Granel">
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Objetivo (unidades)</label><input type="number" id="objMeta" placeholder="0"></div>
+      <div class="fg"><label>Unidad</label>
+        <select id="objUnit">
+          <option value="KGS">KGS</option>
+          <option value="LTS">LTS</option>
+          <option value="UND">UND</option>
+          <option value="BOT">BOT</option>
+          <option value="VEJ">VEJ</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="objDelBtn" onclick="deleteObjetivo()" style="display:none;margin-right:auto">🗑 Eliminar</button>
+      <button class="btn btn-secondary" onclick="closeModal('modalObjetivo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveObjetivo()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOTA -->
+<div class="modal-bg" id="modalNota">
+  <div class="modal">
+    <h2>Nueva Nota</h2>
+    <div class="fg"><label>Nota</label><textarea id="notaTexto" placeholder="Escribí tu nota..." rows="5"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalNota')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNota()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TARJETA PEDIDO PARA IMAGEN (oculta) -->
+<div id="pedCard" style="position:fixed;left:-9999px;top:0;background:#2EAA6E;border-radius:16px;padding:20px 24px;width:360px;color:white;font-family:'Barlow',sans-serif;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,.2);padding-bottom:10px;">
+    <div style="background:rgba(255,255,255,.18);border-radius:6px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;color:white;">AFA</span>
+    </div>
+    <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;opacity:.85;">Agricultores Federados Argentinos</span>
+  </div>
+  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;margin-bottom:4px;" id="pcCliente">CLIENTE</div>
+  <div style="font-size:11px;opacity:.7;margin-bottom:12px;" id="pcFecha">Fecha</div>
+  <div id="pcItems"></div>
+  <div id="pcPago" style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.2);font-size:12px;opacity:.8;"></div>
+  <div id="pcObs" style="font-size:11px;opacity:.6;margin-top:6px;"></div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+// ── SUPABASE ──
+const SB_URL='https://hgyfukcdfimlubdhxgue.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhneWZ1a2NkZmltbHViZGh4Z3VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwODMwOTIsImV4cCI6MjA4NDY1OTA5Mn0.RUspv9-KTJMpQ6Uc8QOE8MQK-p_B1NJC77lBzJny8TQ';
+
+async function sb(path,opts={}){
+  const r=await fetch(SB_URL+path,{
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation',...(opts.headers||{})},
+    ...opts
+  });
+  const t=await r.text();
+  return t?JSON.parse(t):[];
+}
+
+// ── STATE ──
+let clientes=[],pedidos=[],objetivos=[],notas=[];
+let editingCli=null,editingPed=null,editingObj=null;
+let pedItemCount=0;
+
+// ── UTILS ──
+const fmt=n=>n?Number(n).toLocaleString('es-AR'):'—';
+const today=()=>new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+const todayISO=()=>new Date().toISOString().split('T')[0];
+const isCosecha=v=>v&&v.startsWith('U$S');
+function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2400);}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function showView(v){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.hn').forEach(x=>x.classList.remove('active'));
+  document.getElementById('v-'+v).classList.add('active');
+  event.target.classList.add('active');
+  if(v==='clientes')renderClientes();
+  if(v==='pedidos')renderPedidos();
+  if(v==='objetivos')renderObjetivos();
+  if(v==='agenda')renderNotas();
+}
+
+// ══════════════════════════════════════════
+// CLIENTES
+// ══════════════════════════════════════════
+async function loadClientes(){
+  try{ clientes=await sb('/rest/v1/afa_clientes?select=*&order=nombre'); }
+  catch(e){ clientes=[]; }
+  renderClientes();
+}
+
+function renderClientes(){
+  const q=document.getElementById('cliSearch').value.trim().toLowerCase();
+  const f=q?clientes.filter(c=>c.nombre.toLowerCase().includes(q)):clientes;
+
+  // Stats
+  const totalHas=clientes.reduce((s,c)=>s+(+c.has_total||0),0);
+  document.getElementById('cliStats').innerHTML=`
+    <div class="card-stat"><div class="cs-label">Clientes</div><div class="cs-val">${clientes.length}</div></div>
+    <div class="card-stat"><div class="cs-label">Has Totales</div><div class="cs-val">${fmt(totalHas)}</div><div class="cs-sub">todas las campañas</div></div>
+    <div class="card-stat"><div class="cs-label">Maíz</div><div class="cs-val">${fmt(clientes.reduce((s,c)=>s+(+c.has_maiz||0),0))}</div></div>
+    <div class="card-stat"><div class="cs-label">Soja</div><div class="cs-val">${fmt(clientes.reduce((s,c)=>s+(+c.has_soja||0),0))}</div></div>
+    <div class="card-stat"><div class="cs-label">Trigo</div><div class="cs-val">${fmt(clientes.reduce((s,c)=>s+(+c.has_trigo||0),0))}</div></div>
+  `;
+
+  const tbody=document.getElementById('cliBody');
+  if(!f.length){
+    tbody.innerHTML=`<tr><td colspan="12"><div class="empty"><div class="empty-icon">👥</div><p>${q?'Sin resultados':'Sin clientes aún. Agregá el primero.'}</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML=f.map(c=>`
+    <tr>
+      <td><strong>${c.nombre}</strong></td>
+      <td class="td-num td-green">${fmt(c.has_total)}</td>
+      <td class="td-num">${fmt(c.has_maiz)||'—'}</td>
+      <td class="td-num">${fmt(c.has_soja)||'—'}</td>
+      <td class="td-num">${fmt(c.has_trigo)||'—'}</td>
+      <td class="td-num">${fmt(c.has_maiz2)||'—'}</td>
+      <td class="td-num">${fmt(c.has_soja2)||'—'}</td>
+      <td class="td-num">${fmt(c.has_sorgo)||'—'}</td>
+      <td class="td-num">${fmt(c.has_sorgo2)||'—'}</td>
+      <td class="td-num">${fmt(c.has_girasol)||'—'}</td>
+      <td class="td-num">${fmt(c.has_otros)||'—'}</td>
+      <td><div class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openClienteModal('${c.id}')">✏️</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function openClienteModal(id){
+  editingCli=id||null;
+  document.getElementById('cliModalTitle').textContent=id?'Editar Cliente':'Nuevo Cliente';
+  document.getElementById('cliDelBtn').style.display=id?'block':'none';
+  const c=id?clientes.find(x=>x.id===id):{};
+  document.getElementById('cliNombre').value=c.nombre||'';
+  document.getElementById('cliTotal').value=c.has_total||'';
+  document.getElementById('cliMaiz').value=c.has_maiz||'';
+  document.getElementById('cliSoja').value=c.has_soja||'';
+  document.getElementById('cliTrigo').value=c.has_trigo||'';
+  document.getElementById('cliMaiz2').value=c.has_maiz2||'';
+  document.getElementById('cliSoja2').value=c.has_soja2||'';
+  document.getElementById('cliSorgo').value=c.has_sorgo||'';
+  document.getElementById('cliSorgo2').value=c.has_sorgo2||'';
+  document.getElementById('cliGirasol').value=c.has_girasol||'';
+  document.getElementById('cliOtros').value=c.has_otros||'';
+  document.getElementById('modalCliente').classList.add('open');
+  setTimeout(()=>document.getElementById('cliNombre').focus(),100);
+}
+
+async function saveCliente(){
+  const nombre=document.getElementById('cliNombre').value.trim();
+  if(!nombre){toast('Ingresá el nombre');return;}
+  const obj={
+    nombre,campana:'2026/2027',
+    has_total:+document.getElementById('cliTotal').value||0,
+    has_maiz:+document.getElementById('cliMaiz').value||0,
+    has_soja:+document.getElementById('cliSoja').value||0,
+    has_trigo:+document.getElementById('cliTrigo').value||0,
+    has_maiz2:+document.getElementById('cliMaiz2').value||0,
+    has_soja2:+document.getElementById('cliSoja2').value||0,
+    has_sorgo:+document.getElementById('cliSorgo').value||0,
+    has_sorgo2:+document.getElementById('cliSorgo2').value||0,
+    has_girasol:+document.getElementById('cliGirasol').value||0,
+    has_otros:+document.getElementById('cliOtros').value||0,
+    updated_at:new Date().toISOString()
+  };
+  try{
+    if(editingCli){
+      await sb(`/rest/v1/afa_clientes?id=eq.${editingCli}`,{method:'PATCH',body:JSON.stringify(obj)});
+      const idx=clientes.findIndex(x=>x.id===editingCli);
+      if(idx>=0)clientes[idx]={...clientes[idx],...obj};
+    } else {
+      const res=await sb('/rest/v1/afa_clientes',{method:'POST',body:JSON.stringify(obj)});
+      if(res[0])clientes.push(res[0]);
+    }
+    closeModal('modalCliente');renderClientes();
+    toast(editingCli?'✓ Cliente actualizado':'✓ Cliente agregado');
+  }catch(e){toast('Error al guardar');}
+}
+
+async function deleteCliente(){
+  if(!editingCli||!confirm('¿Eliminar este cliente?'))return;
+  await sb(`/rest/v1/afa_clientes?id=eq.${editingCli}`,{method:'DELETE'});
+  clientes=clientes.filter(x=>x.id!==editingCli);
+  closeModal('modalCliente');renderClientes();toast('Cliente eliminado');
+}
+
+function exportClientesXLS(){
+  const data=clientes.map(c=>({
+    'Cliente':c.nombre,'Has Total':c.has_total,'Maíz':c.has_maiz,'Soja':c.has_soja,
+    'Trigo':c.has_trigo,'Maíz 2da':c.has_maiz2,'Soja 2da':c.has_soja2,
+    'Sorgo':c.has_sorgo,'Sorgo 2da':c.has_sorgo2,'Girasol':c.has_girasol,'Otros':c.has_otros
+  }));
+  const ws=XLSX.utils.json_to_sheet(data);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Clientes');
+  XLSX.writeFile(wb,'AFA-Clientes-2026-2027.xlsx');
+}
+
+function importClientesXLS(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    const wb=XLSX.read(e.target.result,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws);
+    let count=0;
+    for(const r of rows){
+      const obj={
+        nombre:r['Cliente']||r['cliente']||r['Nombre']||'',
+        campana:'2026/2027',
+        has_total:+r['Has Total']||0,has_maiz:+r['Maíz']||0,has_soja:+r['Soja']||0,
+        has_trigo:+r['Trigo']||0,has_maiz2:+r['Maíz 2da']||0,has_soja2:+r['Soja 2da']||0,
+        has_sorgo:+r['Sorgo']||0,has_sorgo2:+r['Sorgo 2da']||0,
+        has_girasol:+r['Girasol']||0,has_otros:+r['Otros']||0,
+        updated_at:new Date().toISOString()
+      };
+      if(!obj.nombre)continue;
+      await sb('/rest/v1/afa_clientes',{method:'POST',body:JSON.stringify(obj)});
+      count++;
+    }
+    await loadClientes();
+    toast(`✓ ${count} clientes importados`);
+    input.value='';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ══════════════════════════════════════════
+// PEDIDOS
+// ══════════════════════════════════════════
+async function loadPedidos(){
+  try{ pedidos=await sb('/rest/v1/afa_pedidos?select=*&order=fecha.desc'); }
+  catch(e){ pedidos=[]; }
+  renderPedidos();
+}
+
+function renderPedidos(){
+  const q=document.getElementById('pedSearch').value.trim().toLowerCase();
+  const filtro=document.getElementById('pedFiltro').value;
+  let f=pedidos;
+  if(q)f=f.filter(p=>(p.cliente||'').toLowerCase().includes(q)||(p.items||'').toLowerCase().includes(q));
+  if(filtro==='sin_pago')f=f.filter(p=>!p.forma_pago);
+  if(filtro==='cosecha')f=f.filter(p=>isCosecha(p.forma_pago));
+  if(filtro==='sin_seguro')f=f.filter(p=>isCosecha(p.forma_pago)&&p.seguro!=='si');
+  if(filtro==='sin_forward')f=f.filter(p=>isCosecha(p.forma_pago)&&p.forward!=='si');
+
+  // Alertas
+  const sinPago=pedidos.filter(p=>!p.forma_pago).length;
+  const sinSeguro=pedidos.filter(p=>isCosecha(p.forma_pago)&&p.seguro!=='si').length;
+  const sinForward=pedidos.filter(p=>isCosecha(p.forma_pago)&&p.forward!=='si').length;
+  let alertas='';
+  if(sinPago)alertas+=`<div class="alert-box">⚠️ <strong>${sinPago} pedido${sinPago>1?'s':''} sin forma de pago</strong> — informar al que factura</div>`;
+  if(sinSeguro)alertas+=`<div class="alert-box">🛡️ <strong>${sinSeguro} pedido${sinSeguro>1?'s':''} a cosecha sin seguro</strong></div>`;
+  if(sinForward)alertas+=`<div class="alert-box">📊 <strong>${sinForward} pedido${sinForward>1?'s':''} a cosecha sin forward</strong></div>`;
+  document.getElementById('pedAlertas').innerHTML=alertas;
+
+  const list=document.getElementById('pedList');
+  if(!f.length){
+    list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><p>Sin pedidos aún</p></div>`;
+    return;
+  }
+  list.innerHTML=f.map(p=>{
+    const items=p.items?JSON.parse(p.items):[];
+    const itemsTxt=items.map(i=>`${i.prod} x ${i.cant} ${i.unit||''}`).join(' · ');
+    const cosecha=isCosecha(p.forma_pago);
+    let badges='';
+    if(!p.forma_pago)badges+=`<span class="badge badge-amber">Sin pago</span> `;
+    else badges+=`<span class="badge badge-green">${p.forma_pago}</span> `;
+    if(cosecha){
+      badges+=p.seguro==='si'?`<span class="badge badge-blue">🛡 Seguro</span> `:`<span class="badge badge-red">Sin seguro</span> `;
+      badges+=p.forward==='si'?`<span class="badge badge-blue">📊 Forward</span>`:`<span class="badge badge-red">Sin forward</span>`;
+    }
+    return `<div class="ped-card">
+      <div class="ped-header">
+        <div class="ped-cliente">${p.cliente||'—'}</div>
+        <div class="ped-date">${p.fecha?new Date(p.fecha+'T12:00:00').toLocaleDateString('es-AR'):''}</div>
+      </div>
+      <div class="ped-items">${itemsTxt||'Sin productos'}</div>
+      <div class="ped-footer">
+        <div>${badges}</div>
+        <div class="td-actions">
+          <button class="btn btn-secondary btn-sm" onclick="generarImagenPedidoId('${p.id}')">📸</button>
+          <button class="btn btn-secondary btn-sm" onclick="openPedidoModal('${p.id}')">✏️</button>
+        </div>
+      </div>
+      ${p.obs?`<div style="font-size:12px;color:var(--g400);margin-top:6px">${p.obs}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openPedidoModal(id){
+  editingPed=id||null;
+  document.getElementById('pedModalTitle').textContent=id?'Editar Pedido':'Nuevo Pedido';
+  document.getElementById('pedDelBtn').style.display=id?'block':'none';
+  // Llenar select clientes
+  const sel=document.getElementById('pedCliente');
+  sel.innerHTML='<option value="">— Seleccionar —</option>'+
+    clientes.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(c=>`<option value="${c.nombre}">${c.nombre}</option>`).join('');
+  const p=id?pedidos.find(x=>x.id===id):{};
+  sel.value=p.cliente||'';
+  document.getElementById('pedFecha').value=p.fecha||todayISO();
+  document.getElementById('pedPago').value=p.forma_pago||'';
+  document.getElementById('pedSeguro').value=p.seguro||'';
+  document.getElementById('pedForward').value=p.forward||'';
+  document.getElementById('pedObs').value=p.obs||'';
+  // Items
+  pedItemCount=0;
+  document.getElementById('pedItems').innerHTML='';
+  const items=p.items?JSON.parse(p.items):[];
+  if(items.length)items.forEach(i=>addPedItem(i));
+  else addPedItem();
+  toggleCosecha();
+  document.getElementById('modalPedido').classList.add('open');
+}
+
+function addPedItem(item){
+  pedItemCount++;
+  const n=pedItemCount;
+  const div=document.createElement('div');
+  div.id=`pitem_${n}`;
+  div.style.cssText='display:grid;grid-template-columns:1fr 80px 60px auto;gap:6px;margin-bottom:6px;align-items:center;';
+  div.innerHTML=`
+    <input placeholder="Producto" value="${item?.prod||''}" style="padding:8px;border:1.5px solid var(--g200);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;">
+    <input type="number" placeholder="Cant." value="${item?.cant||''}" style="padding:8px;border:1.5px solid var(--g200);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;">
+    <input placeholder="Unid." value="${item?.unit||'LTS'}" style="padding:8px;border:1.5px solid var(--g200);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;">
+    <button onclick="document.getElementById('pitem_${n}').remove()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:14px;">✕</button>`;
+  document.getElementById('pedItems').appendChild(div);
+}
+
+function toggleCosecha(){
+  const v=document.getElementById('pedPago').value;
+  document.getElementById('cosechaExtra').style.display=isCosecha(v)?'block':'none';
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('pedPago').addEventListener('change',toggleCosecha);
+});
+
+function getPedItems(){
+  return [...document.getElementById('pedItems').children].map(div=>{
+    const ins=div.querySelectorAll('input');
+    return {prod:ins[0].value.trim(),cant:ins[1].value,unit:ins[2].value};
+  }).filter(i=>i.prod);
+}
+
+async function savePedido(){
+  const cliente=document.getElementById('pedCliente').value;
+  if(!cliente){toast('Seleccioná un cliente');return;}
+  const items=getPedItems();
+  if(!items.length){toast('Agregá al menos un producto');return;}
+  const obj={
+    cliente,
+    fecha:document.getElementById('pedFecha').value,
+    items:JSON.stringify(items),
+    forma_pago:document.getElementById('pedPago').value||null,
+    seguro:document.getElementById('pedSeguro').value||null,
+    forward:document.getElementById('pedForward').value||null,
+    obs:document.getElementById('pedObs').value||null,
+    updated_at:new Date().toISOString()
+  };
+  try{
+    if(editingPed){
+      await sb(`/rest/v1/afa_pedidos?id=eq.${editingPed}`,{method:'PATCH',body:JSON.stringify(obj)});
+      const idx=pedidos.findIndex(x=>x.id===editingPed);
+      if(idx>=0)pedidos[idx]={...pedidos[idx],...obj};
+    } else {
+      const res=await sb('/rest/v1/afa_pedidos',{method:'POST',body:JSON.stringify(obj)});
+      if(res[0])pedidos.unshift(res[0]);
+    }
+    closeModal('modalPedido');renderPedidos();
+    toast(editingPed?'✓ Pedido actualizado':'✓ Pedido guardado');
+  }catch(e){toast('Error: '+e.message);}
+}
+
+async function deletePedido(){
+  if(!editingPed||!confirm('¿Eliminar este pedido?'))return;
+  await sb(`/rest/v1/afa_pedidos?id=eq.${editingPed}`,{method:'DELETE'});
+  pedidos=pedidos.filter(x=>x.id!==editingPed);
+  closeModal('modalPedido');renderPedidos();toast('Pedido eliminado');
+}
+
+function generarImagenPedidoId(id){
+  const p=pedidos.find(x=>x.id===id);if(!p)return;
+  const items=p.items?JSON.parse(p.items):[];
+  buildPedCard(p.cliente,p.fecha,items,p.forma_pago,p.obs);
+  capturePedCard();
+}
+
+function generarImagenPedido(){
+  const cliente=document.getElementById('pedCliente').value;
+  const fecha=document.getElementById('pedFecha').value;
+  const items=getPedItems();
+  const pago=document.getElementById('pedPago').value;
+  const obs=document.getElementById('pedObs').value;
+  buildPedCard(cliente,fecha,items,pago,obs);
+  capturePedCard();
+}
+
+function buildPedCard(cliente,fecha,items,pago,obs){
+  document.getElementById('pcCliente').textContent=(cliente||'').toUpperCase();
+  document.getElementById('pcFecha').textContent=fecha?new Date(fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'}):'';
+  document.getElementById('pcItems').innerHTML=items.map(i=>`
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1);">
+      <span style="font-size:14px;font-weight:600;">${i.prod}</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;">${i.cant} ${i.unit}</span>
+    </div>`).join('');
+  document.getElementById('pcPago').textContent=pago?`💳 ${pago}`:'';
+  document.getElementById('pcObs').textContent=obs||'';
+}
+
+function capturePedCard(){
+  const card=document.getElementById('pedCard');
+  card.style.left='0';card.style.position='absolute';card.style.zIndex='-1';
+  setTimeout(()=>{
+    html2canvas(card,{scale:3,backgroundColor:'#2EAA6E',useCORS:true,logging:false}).then(canvas=>{
+      card.style.left='-9999px';card.style.position='fixed';
+      canvas.toBlob(blob=>{
+        const file=new File([blob],'pedido-afa.png',{type:'image/png'});
+        if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+          navigator.share({files:[file],title:'Pedido AFA'}).catch(()=>dlCanvas(canvas));
+        } else dlCanvas(canvas);
+      },'image/png');
+    });
+  },100);
+}
+function dlCanvas(canvas){
+  const a=document.createElement('a');a.download='pedido-afa.png';a.href=canvas.toDataURL('image/png');a.click();
+  toast('✓ Imagen guardada');
+}
+
+function exportPedidosXLS(){
+  const data=pedidos.map(p=>{
+    const items=p.items?JSON.parse(p.items).map(i=>`${i.prod} x${i.cant} ${i.unit}`).join(', '):'';
+    return{'Fecha':p.fecha,'Cliente':p.cliente,'Productos':items,'Forma de pago':p.forma_pago||'','Seguro':p.seguro||'','Forward':p.forward||'','Obs':p.obs||''};
+  });
+  const ws=XLSX.utils.json_to_sheet(data);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Pedidos');
+  XLSX.writeFile(wb,'AFA-Pedidos.xlsx');
+}
+
+// ══════════════════════════════════════════
+// OBJETIVOS
+// ══════════════════════════════════════════
+async function loadObjetivos(){
+  try{ objetivos=await sb('/rest/v1/afa_objetivos?select=*&order=producto'); }
+  catch(e){ objetivos=[]; }
+  renderObjetivos();
+}
+
+function calcVendido(producto){
+  let total=0;
+  pedidos.forEach(p=>{
+    const items=p.items?JSON.parse(p.items):[];
+    items.forEach(i=>{
+      if(i.prod.toLowerCase().includes(producto.toLowerCase()))total+=+i.cant||0;
+    });
+  });
+  return total;
+}
+
+function renderObjetivos(){
+  const list=document.getElementById('objList');
+  if(!objetivos.length){
+    list.innerHTML=`<div class="empty"><div class="empty-icon">🎯</div><p>Sin objetivos aún. Agregá el primero.</p></div>`;
+    return;
+  }
+  list.innerHTML=`<div class="tbl-wrap"><table>
+    <thead><tr><th>Producto</th><th>Unidad</th><th class="td-num">Objetivo</th><th class="td-num">Vendido</th><th class="td-num">%</th><th>Progreso</th><th></th></tr></thead>
+    <tbody>${objetivos.map(o=>{
+      const v=calcVendido(o.producto);
+      const pct=o.meta>0?Math.min(Math.round(v/o.meta*100),100):0;
+      const over=pct>=100;
+      return`<tr>
+        <td><strong>${o.producto}</strong></td>
+        <td><span class="badge badge-gray">${o.unit}</span></td>
+        <td class="td-num">${fmt(o.meta)}</td>
+        <td class="td-num td-green">${fmt(v)}</td>
+        <td class="td-num"><strong ${over?'style="color:var(--amber)"':''}>${pct}%</strong></td>
+        <td style="min-width:120px"><div class="prog-wrap"><div class="prog-bar ${over?'over':''}" style="width:${pct}%"></div></div></td>
+        <td><button class="btn btn-secondary btn-sm" onclick="openObjetivoModal('${o.id}')">✏️</button></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function openObjetivoModal(id){
+  editingObj=id||null;
+  document.getElementById('objModalTitle').textContent=id?'Editar Objetivo':'Nuevo Objetivo';
+  document.getElementById('objDelBtn').style.display=id?'block':'none';
+  const o=id?objetivos.find(x=>x.id===id):{};
+  document.getElementById('objProd').value=o.producto||'';
+  document.getElementById('objMeta').value=o.meta||'';
+  document.getElementById('objUnit').value=o.unit||'KGS';
+  document.getElementById('modalObjetivo').classList.add('open');
+  setTimeout(()=>document.getElementById('objProd').focus(),100);
+}
+
+async function saveObjetivo(){
+  const producto=document.getElementById('objProd').value.trim();
+  const meta=+document.getElementById('objMeta').value;
+  if(!producto||!meta){toast('Completá todos los campos');return;}
+  const obj={producto,meta,unit:document.getElementById('objUnit').value,updated_at:new Date().toISOString()};
+  try{
+    if(editingObj){
+      await sb(`/rest/v1/afa_objetivos?id=eq.${editingObj}`,{method:'PATCH',body:JSON.stringify(obj)});
+      const idx=objetivos.findIndex(x=>x.id===editingObj);
+      if(idx>=0)objetivos[idx]={...objetivos[idx],...obj};
+    } else {
+      const res=await sb('/rest/v1/afa_objetivos',{method:'POST',body:JSON.stringify(obj)});
+      if(res[0])objetivos.push(res[0]);
+    }
+    closeModal('modalObjetivo');renderObjetivos();
+    toast('✓ Objetivo guardado');
+  }catch(e){toast('Error al guardar');}
+}
+
+async function deleteObjetivo(){
+  if(!editingObj||!confirm('¿Eliminar este objetivo?'))return;
+  await sb(`/rest/v1/afa_objetivos?id=eq.${editingObj}`,{method:'DELETE'});
+  objetivos=objetivos.filter(x=>x.id!==editingObj);
+  closeModal('modalObjetivo');renderObjetivos();toast('Objetivo eliminado');
+}
+
+function exportObjetivosXLS(){
+  const data=objetivos.map(o=>({'Producto':o.producto,'Unidad':o.unit,'Objetivo':o.meta,'Vendido':calcVendido(o.producto)}));
+  const ws=XLSX.utils.json_to_sheet(data);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Objetivos');
+  XLSX.writeFile(wb,'AFA-Objetivos.xlsx');
+}
+
+// ══════════════════════════════════════════
+// AGENDA
+// ══════════════════════════════════════════
+async function loadNotas(){
+  try{ notas=await sb('/rest/v1/afa_notas?select=*&order=created_at.desc'); }
+  catch(e){ notas=[]; }
+  renderNotas();
+}
+
+function renderNotas(){
+  const list=document.getElementById('notaList');
+  if(!notas.length){
+    list.innerHTML=`<div class="empty"><div class="empty-icon">📌</div><p>Sin notas aún.</p></div>`;
+    return;
+  }
+  list.innerHTML=notas.map(n=>`
+    <div class="nota-card">
+      <div class="nc-date">📅 ${new Date(n.created_at).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+      <div class="nc-text">${n.texto}</div>
+      <div class="nc-actions">
+        <button class="btn btn-danger btn-sm" onclick="deleteNota('${n.id}')">🗑 Eliminar</button>
+      </div>
+    </div>`).join('');
+}
+
+function openNotaModal(){document.getElementById('notaTexto').value='';document.getElementById('modalNota').classList.add('open');setTimeout(()=>document.getElementById('notaTexto').focus(),100);}
+
+async function saveNota(){
+  const texto=document.getElementById('notaTexto').value.trim();
+  if(!texto){toast('Escribí algo');return;}
+  try{
+    const res=await sb('/rest/v1/afa_notas',{method:'POST',body:JSON.stringify({texto,created_at:new Date().toISOString()})});
+    if(res[0])notas.unshift(res[0]);
+    closeModal('modalNota');renderNotas();toast('✓ Nota guardada');
+  }catch(e){toast('Error al guardar');}
+}
+
+async function deleteNota(id){
+  if(!confirm('¿Eliminar nota?'))return;
+  await sb(`/rest/v1/afa_notas?id=eq.${id}`,{method:'DELETE'});
+  notas=notas.filter(x=>x.id!==id);renderNotas();toast('Nota eliminada');
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+async function init(){
+  await Promise.all([loadClientes(),loadPedidos(),loadObjetivos(),loadNotas()]);
+}
+init();
+</script>
+</body>
+</html>
