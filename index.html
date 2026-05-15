@@ -369,49 +369,84 @@ const DP=[
   {id:"000000000000080087",name:"SILOX 9x60 Ref",cat:"Silos Bolsa",price:269.5,unit:"UND"},
 ];
 
-let prods=JSON.parse(localStorage.getItem('afa4')||'null')||DP;
+// ── SUPABASE CONFIG ──
+const SB_URL='https://hgyfukcdfimlubdhxgue.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhneWZ1a2NkZmltbHViZGh4Z3VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwODMwOTIsImV4cCI6MjA4NDY1OTA5Mn0.RUspv9-KTJMpQ6Uc8QOE8MQK-p_B1NJC77lBzJny8TQ';
+
+async function sbFetch(path,opts={}){
+  const r=await fetch(SB_URL+path,{
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation',...(opts.headers||{})},
+    ...opts
+  });
+  if(!r.ok) throw new Error(await r.text());
+  const t=await r.text();
+  return t?JSON.parse(t):[];
+}
+
+let prods=[];
 let sel=null,actCat='Todos',nid=9000001;
 let lastSync=localStorage.getItem('afa4_lastsync')||null;
-let multiSel=new Set(); // IDs seleccionados para tarjeta múltiple
+let multiSel=new Set();
 
-const sv=()=>localStorage.setItem('afa4',JSON.stringify(prods));
 const fmt=n=>Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:4});
 const today=()=>new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
 function toast(m,dur=2400){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),dur);}
 
-// ── SYNC GMAIL — este botón avisa al usuario que debe pedirle a Claude ──
+// ── CARGAR DESDE SUPABASE ──
+async function loadProds(){
+  try{
+    const data=await sbFetch('/rest/v1/afa_precios?select=*&order=cat,name');
+    if(data.length>0){
+      prods=data;
+    } else {
+      // Primera vez: cargar datos por defecto
+      prods=DP;
+      await saveAllToSB();
+    }
+  } catch(e){
+    console.error('Supabase error:',e);
+    prods=DP;
+    toast('⚠️ Sin conexión — usando datos locales');
+  }
+  rcats();rg();
+}
+
+// ── GUARDAR UN PRODUCTO EN SUPABASE ──
+async function sv(p){
+  try{
+    await sbFetch('/rest/v1/afa_precios',{
+      method:'POST',
+      headers:{'Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({id:p.id,name:p.name,cat:p.cat,price:p.price,unit:p.unit,raw20b:p.raw20b||null,updated_at:new Date().toISOString()})
+    });
+  } catch(e){ console.error('Error guardando:',e); }
+}
+
+// ── GUARDAR TODOS (primera vez) ──
+async function saveAllToSB(){
+  try{
+    await sbFetch('/rest/v1/afa_precios',{
+      method:'POST',
+      headers:{'Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify(DP.map(p=>({...p,raw20b:p.raw20b||null,updated_at:new Date().toISOString()})))
+    });
+  } catch(e){ console.error('Error carga inicial:',e); }
+}
+
+// ── ELIMINAR PRODUCTO ──
+async function sbDelete(id){
+  try{
+    await sbFetch(`/rest/v1/afa_precios?id=eq.${id}`,{method:'DELETE'});
+  } catch(e){ console.error('Error eliminando:',e); }
+}
+
+// ── SYNC GMAIL ──
 function syncGmail(){
-  // Muestra el banner con instrucción para decirle a Claude
   const b=document.getElementById('syncBanner');
   b.innerHTML='📧 <strong>Para sincronizar:</strong> escribile a Claude en el chat: <em>"sincronizar precios desde Gmail"</em> y actualizará automáticamente.';
   b.classList.remove('hidden');
   setTimeout(()=>b.classList.add('hidden'),6000);
 }
-
-// ── FUNCIÓN PÚBLICA para que Claude actualice precios desde afuera ──
-window.afaUpdatePrices=function(updates){
-  // updates = [{id, price, raw20b?, name?}]
-  const updated=[], notFound=[];
-  for(const u of updates){
-    const normId=String(u.id).padStart(18,'0');
-    const p=prods.find(p=>p.id===normId||p.id.replace(/^0+/,'')===String(u.id).replace(/^0+/,''));
-    if(p){
-      p.price=+Number(u.price).toFixed(4);
-      if(u.raw20b) p.raw20b=+Number(u.raw20b).toFixed(4);
-      updated.push(p.name);
-    } else {
-      notFound.push(u.name||u.id);
-    }
-  }
-  if(updated.length){
-    sv();
-    lastSync=today();
-    localStorage.setItem('afa4_lastsync',lastSync);
-    rg();
-    rcats();
-  }
-  return {updated, notFound};
-};
 
 // ── CATEGORÍAS ──
 function rcats(){
@@ -659,7 +694,7 @@ function openEditProd(id){
 
 function closeModal(){document.getElementById('prodModal').classList.remove('open');}
 
-function saveProd(){
+async function saveProd(){
   const name=document.getElementById('mName').value.trim();
   const price=parseFloat(document.getElementById('mPrice').value);
   if(!name){toast('Ingresá un nombre');return;}
@@ -667,8 +702,7 @@ function saveProd(){
   const artId=document.getElementById('mArtId').value.trim().padStart(18,'0')||String(nid++).padStart(18,'0');
   const raw20b=parseFloat(document.getElementById('m20b').value)||undefined;
   const obj={
-    id:artId,
-    name,
+    id:artId,name,
     cat:document.getElementById('mCat').value,
     price:+price.toFixed(4),
     unit:document.getElementById('mUnit').value,
@@ -680,17 +714,19 @@ function saveProd(){
   } else {
     prods.push(obj);
   }
-  sv();closeModal();
+  await sv(obj);
+  closeModal();
   if(document.getElementById('vEd').style.display!=='none')rel();
   else{rcats();rg();}
   toast(editingId?'✓ Producto actualizado':'✓ Producto agregado');
 }
 
-function delProd(){
+async function delProd(){
   if(!editingId)return;
   if(!confirm('¿Eliminar este producto?'))return;
+  await sbDelete(editingId);
   prods=prods.filter(p=>p.id!==editingId);
-  sv();closeModal();rel();toast('Producto eliminado');
+  closeModal();rel();toast('Producto eliminado');
 }
 
 // ── EDITAR LISTA INLINE ──
@@ -705,10 +741,15 @@ function rel(){
     </div>`).join('');
 }
 function upd(id,f,v){const p=prods.find(p=>p.id===id);if(p)p[f]=v;}
-function saveL(){sv();toast('✓ Lista guardada');showView('ver');}
+async function saveL(){
+  toast('⏳ Guardando...');
+  for(const p of prods) await sv(p);
+  toast('✓ Lista guardada');
+  showView('ver');
+}
 
 // ── INIT ──
-rcats();rg();
+loadProds();
 </script>
 </body>
 </html>
