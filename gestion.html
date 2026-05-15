@@ -192,15 +192,16 @@ tr:hover td{background:var(--g50);}
       <thead>
         <tr>
           <th>Cliente</th>
+          <th>Socio</th>
           <th class="td-num">Has Total</th>
-          <th class="td-num">Maíz</th>
-          <th class="td-num">Soja</th>
           <th class="td-num">Trigo</th>
-          <th class="td-num">Maíz 2da</th>
-          <th class="td-num">Soja 2da</th>
-          <th class="td-num">Sorgo</th>
-          <th class="td-num">Sorgo 2da</th>
           <th class="td-num">Girasol</th>
+          <th class="td-num">Maíz</th>
+          <th class="td-num">Sorgo</th>
+          <th class="td-num">Soja 1</th>
+          <th class="td-num">Soja 2</th>
+          <th class="td-num">Maíz 2</th>
+          <th class="td-num">Sorgo 2</th>
           <th class="td-num">Otros</th>
           <th></th>
         </tr>
@@ -282,26 +283,34 @@ tr:hover td{background:var(--g50);}
 <div class="modal-bg" id="modalCliente">
   <div class="modal">
     <h2 id="cliModalTitle">Nuevo Cliente</h2>
-    <div class="fg"><label>Nombre del cliente</label><input id="cliNombre" placeholder="Ej: Juan Pérez"></div>
-    <div class="sect-divider">Hectáreas por cultivo</div>
+    <div class="fg-row">
+      <div class="fg"><label>Nombre del cliente</label><input id="cliNombre" placeholder="Ej: Juan Pérez"></div>
+      <div class="fg"><label>¿Es socio?</label>
+        <select id="cliSocio">
+          <option value="si">✅ Socio</option>
+          <option value="no">❌ No socio</option>
+        </select>
+      </div>
+    </div>
+    <div class="sect-divider">Hectáreas por cultivo (opcional)</div>
     <div class="fg-row">
       <div class="fg"><label>Has Total</label><input type="number" id="cliTotal" placeholder="0"></div>
-      <div class="fg"><label>Maíz</label><input type="number" id="cliMaiz" placeholder="0"></div>
-    </div>
-    <div class="fg-row">
-      <div class="fg"><label>Soja</label><input type="number" id="cliSoja" placeholder="0"></div>
       <div class="fg"><label>Trigo</label><input type="number" id="cliTrigo" placeholder="0"></div>
     </div>
     <div class="fg-row">
-      <div class="fg"><label>Maíz 2da</label><input type="number" id="cliMaiz2" placeholder="0"></div>
-      <div class="fg"><label>Soja 2da</label><input type="number" id="cliSoja2" placeholder="0"></div>
+      <div class="fg"><label>Girasol</label><input type="number" id="cliGirasol" placeholder="0"></div>
+      <div class="fg"><label>Maíz</label><input type="number" id="cliMaiz" placeholder="0"></div>
     </div>
     <div class="fg-row">
       <div class="fg"><label>Sorgo</label><input type="number" id="cliSorgo" placeholder="0"></div>
-      <div class="fg"><label>Sorgo 2da</label><input type="number" id="cliSorgo2" placeholder="0"></div>
+      <div class="fg"><label>Soja 1</label><input type="number" id="cliSoja" placeholder="0"></div>
     </div>
     <div class="fg-row">
-      <div class="fg"><label>Girasol</label><input type="number" id="cliGirasol" placeholder="0"></div>
+      <div class="fg"><label>Soja 2</label><input type="number" id="cliSoja2" placeholder="0"></div>
+      <div class="fg"><label>Maíz 2</label><input type="number" id="cliMaiz2" placeholder="0"></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Sorgo 2</label><input type="number" id="cliSorgo2" placeholder="0"></div>
       <div class="fg"><label>Otros</label><input type="number" id="cliOtros" placeholder="0"></div>
     </div>
     <div class="modal-footer">
@@ -483,33 +492,35 @@ function renderClientes(){
   const f=q?clientes.filter(c=>c.nombre.toLowerCase().includes(q)):clientes;
 
   // Stats
-  const totalHas=clientes.reduce((s,c)=>s+(+c.has_total||0),0);
   document.getElementById('cliStats').innerHTML=`
     <div class="card-stat"><div class="cs-label">Clientes</div><div class="cs-val">${clientes.length}</div></div>
-    <div class="card-stat"><div class="cs-label">Has Totales</div><div class="cs-val">${fmt(totalHas)}</div><div class="cs-sub">todas las campañas</div></div>
+    <div class="card-stat"><div class="cs-label">Socios</div><div class="cs-val">${clientes.filter(c=>c.socio==='si').length}</div></div>
+    <div class="card-stat"><div class="cs-label">Has Totales</div><div class="cs-val">${fmt(clientes.reduce((s,c)=>s+(+c.has_total||0),0))}</div></div>
+    <div class="card-stat"><div class="cs-label">Trigo</div><div class="cs-val">${fmt(clientes.reduce((s,c)=>s+(+c.has_trigo||0),0))}</div></div>
     <div class="card-stat"><div class="cs-label">Maíz</div><div class="cs-val">${fmt(clientes.reduce((s,c)=>s+(+c.has_maiz||0),0))}</div></div>
     <div class="card-stat"><div class="cs-label">Soja</div><div class="cs-val">${fmt(clientes.reduce((s,c)=>s+(+c.has_soja||0),0))}</div></div>
-    <div class="card-stat"><div class="cs-label">Trigo</div><div class="cs-val">${fmt(clientes.reduce((s,c)=>s+(+c.has_trigo||0),0))}</div></div>
   `;
 
   const tbody=document.getElementById('cliBody');
   if(!f.length){
-    tbody.innerHTML=`<tr><td colspan="12"><div class="empty"><div class="empty-icon">👥</div><p>${q?'Sin resultados':'Sin clientes aún. Agregá el primero.'}</p></div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="13"><div class="empty"><div class="empty-icon">👥</div><p>${q?'Sin resultados':'Sin clientes aún. Agregá el primero.'}</p></div></td></tr>`;
     return;
   }
+  const n=v=>v?fmt(v):'—';
   tbody.innerHTML=f.map(c=>`
     <tr>
-      <td><strong>${c.nombre}</strong></td>
-      <td class="td-num td-green">${fmt(c.has_total)}</td>
-      <td class="td-num">${fmt(c.has_maiz)||'—'}</td>
-      <td class="td-num">${fmt(c.has_soja)||'—'}</td>
-      <td class="td-num">${fmt(c.has_trigo)||'—'}</td>
-      <td class="td-num">${fmt(c.has_maiz2)||'—'}</td>
-      <td class="td-num">${fmt(c.has_soja2)||'—'}</td>
-      <td class="td-num">${fmt(c.has_sorgo)||'—'}</td>
-      <td class="td-num">${fmt(c.has_sorgo2)||'—'}</td>
-      <td class="td-num">${fmt(c.has_girasol)||'—'}</td>
-      <td class="td-num">${fmt(c.has_otros)||'—'}</td>
+      <td><strong style="color:${c.socio==='no'?'#ef4444':'var(--g800)'}">${c.nombre}</strong></td>
+      <td>${c.socio==='no'?'<span class="badge badge-red">No socio</span>':'<span class="badge badge-green">Socio</span>'}</td>
+      <td class="td-num td-green">${n(c.has_total)}</td>
+      <td class="td-num">${n(c.has_trigo)}</td>
+      <td class="td-num">${n(c.has_girasol)}</td>
+      <td class="td-num">${n(c.has_maiz)}</td>
+      <td class="td-num">${n(c.has_sorgo)}</td>
+      <td class="td-num">${n(c.has_soja)}</td>
+      <td class="td-num">${n(c.has_soja2)}</td>
+      <td class="td-num">${n(c.has_maiz2)}</td>
+      <td class="td-num">${n(c.has_sorgo2)}</td>
+      <td class="td-num">${n(c.has_otros)}</td>
       <td><div class="td-actions">
         <button class="btn btn-secondary btn-sm" onclick="openClienteModal('${c.id}')">✏️</button>
       </div></td>
@@ -522,15 +533,16 @@ function openClienteModal(id){
   document.getElementById('cliDelBtn').style.display=id?'block':'none';
   const c=id?clientes.find(x=>x.id===id):{};
   document.getElementById('cliNombre').value=c.nombre||'';
+  document.getElementById('cliSocio').value=c.socio||'si';
   document.getElementById('cliTotal').value=c.has_total||'';
-  document.getElementById('cliMaiz').value=c.has_maiz||'';
-  document.getElementById('cliSoja').value=c.has_soja||'';
   document.getElementById('cliTrigo').value=c.has_trigo||'';
-  document.getElementById('cliMaiz2').value=c.has_maiz2||'';
-  document.getElementById('cliSoja2').value=c.has_soja2||'';
-  document.getElementById('cliSorgo').value=c.has_sorgo||'';
-  document.getElementById('cliSorgo2').value=c.has_sorgo2||'';
   document.getElementById('cliGirasol').value=c.has_girasol||'';
+  document.getElementById('cliMaiz').value=c.has_maiz||'';
+  document.getElementById('cliSorgo').value=c.has_sorgo||'';
+  document.getElementById('cliSoja').value=c.has_soja||'';
+  document.getElementById('cliSoja2').value=c.has_soja2||'';
+  document.getElementById('cliMaiz2').value=c.has_maiz2||'';
+  document.getElementById('cliSorgo2').value=c.has_sorgo2||'';
   document.getElementById('cliOtros').value=c.has_otros||'';
   document.getElementById('modalCliente').classList.add('open');
   setTimeout(()=>document.getElementById('cliNombre').focus(),100);
@@ -540,16 +552,18 @@ async function saveCliente(){
   const nombre=document.getElementById('cliNombre').value.trim();
   if(!nombre){toast('Ingresá el nombre');return;}
   const obj={
-    nombre,campana:'2026/2027',
+    nombre,
+    campana:'2026/2027',
+    socio:document.getElementById('cliSocio').value,
     has_total:+document.getElementById('cliTotal').value||0,
-    has_maiz:+document.getElementById('cliMaiz').value||0,
-    has_soja:+document.getElementById('cliSoja').value||0,
     has_trigo:+document.getElementById('cliTrigo').value||0,
-    has_maiz2:+document.getElementById('cliMaiz2').value||0,
-    has_soja2:+document.getElementById('cliSoja2').value||0,
-    has_sorgo:+document.getElementById('cliSorgo').value||0,
-    has_sorgo2:+document.getElementById('cliSorgo2').value||0,
     has_girasol:+document.getElementById('cliGirasol').value||0,
+    has_maiz:+document.getElementById('cliMaiz').value||0,
+    has_sorgo:+document.getElementById('cliSorgo').value||0,
+    has_soja:+document.getElementById('cliSoja').value||0,
+    has_soja2:+document.getElementById('cliSoja2').value||0,
+    has_maiz2:+document.getElementById('cliMaiz2').value||0,
+    has_sorgo2:+document.getElementById('cliSorgo2').value||0,
     has_otros:+document.getElementById('cliOtros').value||0,
     updated_at:new Date().toISOString()
   };
@@ -558,13 +572,19 @@ async function saveCliente(){
       await sb(`/rest/v1/afa_clientes?id=eq.${editingCli}`,{method:'PATCH',body:JSON.stringify(obj)});
       const idx=clientes.findIndex(x=>x.id===editingCli);
       if(idx>=0)clientes[idx]={...clientes[idx],...obj};
+      toast('✓ Cliente actualizado');
     } else {
       const res=await sb('/rest/v1/afa_clientes',{method:'POST',body:JSON.stringify(obj)});
-      if(res[0])clientes.push(res[0]);
+      if(res&&res[0])clientes.push(res[0]);
+      else await loadClientes();
+      toast('✓ Cliente agregado');
     }
-    closeModal('modalCliente');renderClientes();
-    toast(editingCli?'✓ Cliente actualizado':'✓ Cliente agregado');
-  }catch(e){toast('Error al guardar');}
+    closeModal('modalCliente');
+    renderClientes();
+  }catch(e){
+    console.error(e);
+    toast('Error: '+e.message);
+  }
 }
 
 async function deleteCliente(){
