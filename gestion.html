@@ -251,15 +251,22 @@ tr:hover td{background:var(--g50);}
 <div id="v-objetivos" class="view">
   <div class="sec-title">
     <div>
-      <h2>🎯 Objetivos de Insumos</h2>
-      <p>Campaña 2026/2027 · 1 Mar 2026 — 28 Feb 2027</p>
+      <h2>🎯 Productos Foco</h2>
+      <p>San Carlos Centro · Campaña 2026/2027 · 1 Mar 2026 — 28 Feb 2027</p>
     </div>
     <div class="sec-actions">
       <button class="btn btn-secondary btn-sm" onclick="exportObjetivosXLS()">⬇ Excel</button>
-      <button class="btn btn-primary" onclick="openObjetivoModal()">+ Nuevo objetivo</button>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importObj').click()">⬆ Importar</button>
+      <input type="file" id="importObj" accept=".xlsx,.xls" style="display:none" onchange="importObjetivosXLS(this)">
+      <button class="btn btn-primary" onclick="openObjetivoModal()">+ Producto</button>
     </div>
   </div>
-  <div id="objList"></div>
+
+  <!-- RESUMEN GENERAL -->
+  <div class="cards-row" id="objSummary"></div>
+
+  <!-- DASHBOARD SEMAFORO -->
+  <div id="objDashboard"></div>
 </div>
 
 <!-- ═══════════════════════════════════════════
@@ -386,22 +393,21 @@ tr:hover td{background:var(--g50);}
 <!-- MODAL OBJETIVO -->
 <div class="modal-bg" id="modalObjetivo">
   <div class="modal">
-    <h2 id="objModalTitle">Nuevo Objetivo</h2>
-    <div class="fg">
-      <label>Producto</label>
-      <input id="objProd" placeholder="Ej: Urea Granulada Granel">
-    </div>
+    <h2 id="objModalTitle">Producto Foco</h2>
     <div class="fg-row">
-      <div class="fg"><label>Objetivo (unidades)</label><input type="number" id="objMeta" placeholder="0"></div>
+      <div class="fg"><label>Producto</label><input id="objProd" placeholder="Ej: Glifosato"></div>
       <div class="fg"><label>Unidad</label>
         <select id="objUnit">
-          <option value="KGS">KGS</option>
           <option value="LTS">LTS</option>
+          <option value="KG">KG</option>
+          <option value="BOLSAS">BOLSAS</option>
           <option value="UND">UND</option>
-          <option value="BOT">BOT</option>
-          <option value="VEJ">VEJ</option>
         </select>
       </div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Objetivo campaña</label><input type="number" id="objMeta" placeholder="0"></div>
+      <div class="fg"><label>Vendido hasta ahora</label><input type="number" id="objVendido" placeholder="0"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-danger" id="objDelBtn" onclick="deleteObjetivo()" style="display:none;margin-right:auto">🗑 Eliminar</button>
@@ -849,58 +855,158 @@ function exportPedidosXLS(){
 }
 
 // ══════════════════════════════════════════
-// OBJETIVOS
+// OBJETIVOS — PRODUCTOS FOCO
 // ══════════════════════════════════════════
+
+// Datos iniciales precargados
+const OBJ_INICIAL=[
+  {producto:'Glifosato',unit:'LTS',meta:30440,vendido_inicial:3600},
+  {producto:'Glufosinato de amonio',unit:'LTS',meta:2020,vendido_inicial:140},
+  {producto:'2,4 D Etil exil',unit:'LTS',meta:12060,vendido_inicial:4080},
+  {producto:'Fierce',unit:'LTS',meta:60,vendido_inicial:0},
+  {producto:'Yamato',unit:'LTS',meta:120,vendido_inicial:0},
+  {producto:'Atrazina',unit:'LTS',meta:3100,vendido_inicial:0},
+  {producto:'S-Metolaclor',unit:'LTS',meta:1940,vendido_inicial:0},
+  {producto:'Terbutilazina',unit:'LTS',meta:520,vendido_inicial:0},
+  {producto:'Sulfentrazone',unit:'LTS',meta:1840,vendido_inicial:0},
+  {producto:'Flumioxazin',unit:'LTS',meta:340,vendido_inicial:0},
+  {producto:'Cletodim',unit:'LTS',meta:10740,vendido_inicial:1510},
+  {producto:'Haloxifop',unit:'LTS',meta:360,vendido_inicial:70},
+  {producto:'Benzuron',unit:'LTS',meta:80,vendido_inicial:0},
+  {producto:'Imida - Lambdac',unit:'LTS',meta:880,vendido_inicial:120},
+  {producto:'MSO Siliconado',unit:'LTS',meta:1060,vendido_inicial:100},
+  {producto:'Azoxi - Cipro',unit:'LTS',meta:1140,vendido_inicial:175},
+  {producto:'Inoculante',unit:'LTS',meta:420,vendido_inicial:0},
+  {producto:'Urea',unit:'KG',meta:713860,vendido_inicial:14000},
+  {producto:'Urea Protegida',unit:'KG',meta:39180,vendido_inicial:0},
+  {producto:'Mezcla 12-40',unit:'KG',meta:305980,vendido_inicial:6000},
+  {producto:'Mezcla Qca NPS',unit:'KG',meta:91220,vendido_inicial:0},
+  {producto:'Solmix',unit:'LTS',meta:25420,vendido_inicial:0},
+  {producto:'Maíz',unit:'BOLSAS',meta:800,vendido_inicial:671},
+];
+
 async function loadObjetivos(){
-  try{ objetivos=await sb('/rest/v1/afa_objetivos?select=*&order=producto'); }
-  catch(e){ objetivos=[]; }
+  try{
+    const data=await sb('/rest/v1/afa_objetivos?select=*&order=producto');
+    if(data&&data.length>0){
+      objetivos=data;
+    } else {
+      // Primera vez: cargar datos iniciales
+      const rows=OBJ_INICIAL.map(o=>({
+        producto:o.producto,meta:o.meta,unit:o.unit,
+        vendido_inicial:o.vendido_inicial,
+        updated_at:new Date().toISOString()
+      }));
+      const res=await sb('/rest/v1/afa_objetivos',{method:'POST',body:JSON.stringify(rows)});
+      objetivos=res||[];
+      if(!objetivos.length) await reloadObjetivos();
+    }
+  }catch(e){objetivos=[];}
   renderObjetivos();
 }
 
-function calcVendido(producto){
+async function reloadObjetivos(){
+  try{objetivos=await sb('/rest/v1/afa_objetivos?select=*&order=producto');}catch(e){}
+}
+
+function calcVendidoPedidos(producto){
   let total=0;
   pedidos.forEach(p=>{
     const items=p.items?JSON.parse(p.items):[];
     items.forEach(i=>{
-      if(i.prod.toLowerCase().includes(producto.toLowerCase()))total+=+i.cant||0;
+      if(i.prod&&i.prod.toLowerCase().includes(producto.toLowerCase()))
+        total+=+i.cant||0;
     });
   });
   return total;
 }
 
+function getColor(pct){
+  if(pct>=75)return{bg:'#d1fae5',border:'#6ee7b7',text:'#065f46',bar:'#2EAA6E'};
+  if(pct>=25)return{bg:'#fffbeb',border:'#fde68a',text:'#92400e',bar:'#f59e0b'};
+  return{bg:'#fee2e2',border:'#fca5a5',text:'#991b1b',bar:'#ef4444'};
+}
+
 function renderObjetivos(){
-  const list=document.getElementById('objList');
   if(!objetivos.length){
-    list.innerHTML=`<div class="empty"><div class="empty-icon">🎯</div><p>Sin objetivos aún. Agregá el primero.</p></div>`;
+    document.getElementById('objSummary').innerHTML='';
+    document.getElementById('objDashboard').innerHTML=`<div class="empty"><div class="empty-icon">🎯</div><p>Sin productos foco. Agregá el primero.</p></div>`;
     return;
   }
-  list.innerHTML=`<div class="tbl-wrap"><table>
-    <thead><tr><th>Producto</th><th>Unidad</th><th class="td-num">Objetivo</th><th class="td-num">Vendido</th><th class="td-num">%</th><th>Progreso</th><th></th></tr></thead>
-    <tbody>${objetivos.map(o=>{
-      const v=calcVendido(o.producto);
-      const pct=o.meta>0?Math.min(Math.round(v/o.meta*100),100):0;
-      const over=pct>=100;
-      return`<tr>
-        <td><strong>${o.producto}</strong></td>
-        <td><span class="badge badge-gray">${o.unit}</span></td>
-        <td class="td-num">${fmt(o.meta)}</td>
-        <td class="td-num td-green">${fmt(v)}</td>
-        <td class="td-num"><strong ${over?'style="color:var(--amber)"':''}>${pct}%</strong></td>
-        <td style="min-width:120px"><div class="prog-wrap"><div class="prog-bar ${over?'over':''}" style="width:${pct}%"></div></div></td>
-        <td><button class="btn btn-secondary btn-sm" onclick="openObjetivoModal('${o.id}')">✏️</button></td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table></div>`;
+
+  // Calcular totales
+  let totalMeta=0,totalVendido=0,verdes=0,amarillos=0,rojos=0;
+  objetivos.forEach(o=>{
+    const vped=calcVendidoPedidos(o.producto);
+    const vtotal=(+o.vendido_inicial||0)+vped;
+    const pct=o.meta>0?vtotal/o.meta*100:0;
+    totalMeta++;
+    if(pct>=75)verdes++;
+    else if(pct>=25)amarillos++;
+    else rojos++;
+  });
+
+  // Summary cards
+  document.getElementById('objSummary').innerHTML=`
+    <div class="card-stat"><div class="cs-label">Productos foco</div><div class="cs-val">${totalMeta}</div></div>
+    <div class="card-stat"><div class="cs-label">🟢 En camino</div><div class="cs-val" style="color:#2EAA6E">${verdes}</div><div class="cs-sub">&gt;75%</div></div>
+    <div class="card-stat"><div class="cs-label">🟡 En proceso</div><div class="cs-val" style="color:#f59e0b">${amarillos}</div><div class="cs-sub">25-75%</div></div>
+    <div class="card-stat"><div class="cs-label">🔴 Atención</div><div class="cs-val" style="color:#ef4444">${rojos}</div><div class="cs-sub">&lt;25%</div></div>
+  `;
+
+  // Dashboard grid
+  const html=objetivos.map(o=>{
+    const vped=calcVendidoPedidos(o.producto);
+    const vtotal=(+o.vendido_inicial||0)+vped;
+    const resto=Math.max(0,(+o.meta||0)-vtotal);
+    const pct=o.meta>0?Math.min(vtotal/o.meta*100,100):0;
+    const pctReal=o.meta>0?vtotal/o.meta*100:0;
+    const c=getColor(pctReal);
+    const fmtN=n=>Number(n).toLocaleString('es-AR');
+    return`<div style="background:${c.bg};border:1.5px solid ${c.border};border-radius:14px;padding:16px 18px;position:relative;cursor:pointer;" onclick="openObjetivoModal('${o.id}')">
+      <!-- Semáforo dot -->
+      <div style="position:absolute;top:12px;right:12px;width:12px;height:12px;border-radius:50%;background:${c.bar};box-shadow:0 0 6px ${c.bar}"></div>
+      <!-- Nombre y unidad -->
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:${c.text};line-height:1.1;margin-bottom:2px;padding-right:20px;">${o.producto}</div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.text};opacity:.6;margin-bottom:12px;">${o.unit}</div>
+      <!-- % grande -->
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:42px;color:${c.text};line-height:1;margin-bottom:6px;">${pctReal.toFixed(1)}<span style="font-size:20px">%</span></div>
+      <!-- Barra -->
+      <div style="background:rgba(0,0,0,.08);border-radius:20px;height:6px;margin-bottom:10px;overflow:hidden;">
+        <div style="height:100%;border-radius:20px;background:${c.bar};width:${pct}%;transition:width .4s;"></div>
+      </div>
+      <!-- Números -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
+        <div style="text-align:center;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:${c.text};">${fmtN(vtotal)}</div>
+          <div style="font-size:9px;color:${c.text};opacity:.6;font-weight:700;letter-spacing:.5px;">VENDIDO</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:${c.text};">${fmtN(o.meta)}</div>
+          <div style="font-size:9px;color:${c.text};opacity:.6;font-weight:700;letter-spacing:.5px;">OBJETIVO</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:${c.text};">${fmtN(resto)}</div>
+          <div style="font-size:9px;color:${c.text};opacity:.6;font-weight:700;letter-spacing:.5px;">RESTO</div>
+        </div>
+      </div>
+      ${vped>0?`<div style="font-size:10px;color:${c.text};opacity:.5;margin-top:8px;border-top:1px solid rgba(0,0,0,.06);padding-top:6px;">+${fmtN(vped)} desde pedidos</div>`:''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('objDashboard').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;">${html}</div>`;
 }
 
 function openObjetivoModal(id){
   editingObj=id||null;
-  document.getElementById('objModalTitle').textContent=id?'Editar Objetivo':'Nuevo Objetivo';
+  document.getElementById('objModalTitle').textContent=id?'Editar Producto Foco':'Nuevo Producto Foco';
   document.getElementById('objDelBtn').style.display=id?'block':'none';
   const o=id?objetivos.find(x=>x.id===id):{};
   document.getElementById('objProd').value=o.producto||'';
   document.getElementById('objMeta').value=o.meta||'';
-  document.getElementById('objUnit').value=o.unit||'KGS';
+  document.getElementById('objUnit').value=o.unit||'LTS';
+  document.getElementById('objVendido').value=o.vendido_inicial||'';
   document.getElementById('modalObjetivo').classList.add('open');
   setTimeout(()=>document.getElementById('objProd').focus(),100);
 }
@@ -908,35 +1014,79 @@ function openObjetivoModal(id){
 async function saveObjetivo(){
   const producto=document.getElementById('objProd').value.trim();
   const meta=+document.getElementById('objMeta').value;
-  if(!producto||!meta){toast('Completá todos los campos');return;}
-  const obj={producto,meta,unit:document.getElementById('objUnit').value,updated_at:new Date().toISOString()};
+  if(!producto||!meta){toast('Completá producto y objetivo');return;}
+  const obj={
+    producto,meta,
+    unit:document.getElementById('objUnit').value,
+    vendido_inicial:+document.getElementById('objVendido').value||0,
+    updated_at:new Date().toISOString()
+  };
   try{
     if(editingObj){
       await sb(`/rest/v1/afa_objetivos?id=eq.${editingObj}`,{method:'PATCH',body:JSON.stringify(obj)});
       const idx=objetivos.findIndex(x=>x.id===editingObj);
       if(idx>=0)objetivos[idx]={...objetivos[idx],...obj};
+      toast('✓ Actualizado');
     } else {
       const res=await sb('/rest/v1/afa_objetivos',{method:'POST',body:JSON.stringify(obj)});
-      if(res[0])objetivos.push(res[0]);
+      if(res&&res[0])objetivos.push(res[0]);
+      else await reloadObjetivos();
+      toast('✓ Producto foco agregado');
     }
     closeModal('modalObjetivo');renderObjetivos();
-    toast('✓ Objetivo guardado');
-  }catch(e){toast('Error al guardar');}
+  }catch(e){toast('Error: '+e.message);}
 }
 
 async function deleteObjetivo(){
-  if(!editingObj||!confirm('¿Eliminar este objetivo?'))return;
+  if(!editingObj||!confirm('¿Eliminar este producto foco?'))return;
   await sb(`/rest/v1/afa_objetivos?id=eq.${editingObj}`,{method:'DELETE'});
   objetivos=objetivos.filter(x=>x.id!==editingObj);
-  closeModal('modalObjetivo');renderObjetivos();toast('Objetivo eliminado');
+  closeModal('modalObjetivo');renderObjetivos();toast('Eliminado');
 }
 
 function exportObjetivosXLS(){
-  const data=objetivos.map(o=>({'Producto':o.producto,'Unidad':o.unit,'Objetivo':o.meta,'Vendido':calcVendido(o.producto)}));
+  const data=objetivos.map(o=>{
+    const vped=calcVendidoPedidos(o.producto);
+    const vtotal=(+o.vendido_inicial||0)+vped;
+    const pct=o.meta>0?((vtotal/o.meta)*100).toFixed(1)+'%':'0%';
+    return{
+      'Producto':o.producto,'Unidad':o.unit,
+      'Objetivo':o.meta,'Vendido':vtotal,
+      'Vendido inicial':o.vendido_inicial,'Desde pedidos':vped,
+      'Resto':Math.max(0,o.meta-vtotal),'%':pct
+    };
+  });
   const ws=XLSX.utils.json_to_sheet(data);
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Objetivos');
-  XLSX.writeFile(wb,'AFA-Objetivos.xlsx');
+  XLSX.utils.book_append_sheet(wb,ws,'Productos Foco');
+  XLSX.writeFile(wb,'AFA-ProductosFoco-2026-2027.xlsx');
+}
+
+function importObjetivosXLS(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    const wb=XLSX.read(e.target.result,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws);
+    let count=0;
+    for(const r of rows){
+      const obj={
+        producto:r['Producto']||'',meta:+r['Objetivo']||0,
+        unit:r['Unidad']||'LTS',
+        vendido_inicial:+r['Vendido inicial']||0,
+        updated_at:new Date().toISOString()
+      };
+      if(!obj.producto)continue;
+      await sb('/rest/v1/afa_objetivos',{method:'POST',body:JSON.stringify(obj)});
+      count++;
+    }
+    await reloadObjetivos();
+    renderObjetivos();
+    toast(`✓ ${count} productos importados`);
+    input.value='';
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 // ══════════════════════════════════════════
