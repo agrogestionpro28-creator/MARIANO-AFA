@@ -487,10 +487,58 @@ function showView(v){
 // ══════════════════════════════════════════
 // CLIENTES
 // ══════════════════════════════════════════
+let coberturas=[]; // cache de coberturas
+
 async function loadClientes(){
-  try{ clientes=await sb('/rest/v1/afa_clientes?select=*&order=nombre'); }
-  catch(e){ clientes=[]; }
+  try{
+    [clientes, coberturas] = await Promise.all([
+      sb('/rest/v1/afa_clientes?select=*&order=nombre'),
+      sb('/rest/v1/afa_cobertura?select=*')
+    ]);
+  } catch(e){ clientes=[]; coberturas=[]; }
   renderClientes();
+}
+
+// Mapeo forma de pago → cultivo
+const PAGO_CULTIVO={
+  'U$S Dic (trigo)':'Trigo',
+  'U$S Feb (girasol)':'Girasol',
+  'U$S Abr (maíz/sorgo)':'Maíz/Sorgo',
+  'U$S May (soja)':'Soja',
+  'U$S Jul (maíz 2da)':'Maíz 2da'
+};
+
+// Obtener cultivos a cosecha de un cliente basado en pedidos
+function getCultivosACosecha(clienteNombre){
+  const cultivos=new Set();
+  pedidos.filter(p=>p.cliente===clienteNombre&&isCosecha(p.forma_pago)).forEach(p=>{
+    const cult=PAGO_CULTIVO[p.forma_pago];
+    if(cult)cultivos.add(cult);
+  });
+  return [...cultivos];
+}
+
+// Obtener cobertura de un cliente+cultivo
+function getCobertura(clienteId, cultivo){
+  return coberturas.find(c=>c.cliente_id===clienteId&&c.cultivo===cultivo)||null;
+}
+
+// Toggle seguro o forward
+async function toggleCobertura(clienteId, cultivo, campo){
+  let cob=getCobertura(clienteId, cultivo);
+  const nuevoVal=(!cob||cob[campo]==='no')?'si':'no';
+  try{
+    if(cob){
+      await sb(`/rest/v1/afa_cobertura?id=eq.${cob.id}`,{method:'PATCH',body:JSON.stringify({[campo]:nuevoVal,updated_at:new Date().toISOString()})});
+      cob[campo]=nuevoVal;
+    } else {
+      const res=await sb('/rest/v1/afa_cobertura',{method:'POST',body:JSON.stringify({
+        cliente_id:clienteId,cultivo,seguro:'no',forward:'no',[campo]:nuevoVal,campana:'2026/2027',updated_at:new Date().toISOString()
+      })});
+      if(res&&res[0])coberturas.push(res[0]);
+    }
+    renderClientes();
+  } catch(e){ toast('Error al guardar cobertura'); }
 }
 
 function renderClientes(){
@@ -498,24 +546,58 @@ function renderClientes(){
   const f=q?clientes.filter(c=>c.nombre.toLowerCase().includes(q)):clientes;
 
   // Stats
+  const conCosecha=clientes.filter(c=>getCultivosACosecha(c.nombre).length>0);
+  const sinCobertura=conCosecha.filter(c=>{
+    const cults=getCultivosACosecha(c.nombre);
+    return cults.some(cult=>{
+      const cob=getCobertura(c.id,cult);
+      return !cob||cob.seguro!=='si'||cob.forward!=='si';
+    });
+  }).length;
+
   document.getElementById('cliStats').innerHTML=`
     <div class="card-stat"><div class="cs-label">Clientes</div><div class="cs-val">${clientes.length}</div></div>
     <div class="card-stat"><div class="cs-label">Socios</div><div class="cs-val">${clientes.filter(c=>c.socio==='si').length}</div></div>
+    <div class="card-stat"><div class="cs-label">A cosecha</div><div class="cs-val" style="color:#3b82f6">${conCosecha.length}</div></div>
+    <div class="card-stat"><div class="cs-label">⚠️ Sin cobertura</div><div class="cs-val" style="color:#ef4444">${sinCobertura}</div></div>
     <div class="card-stat"><div class="cs-label">Has Totales</div><div class="cs-val">${fmt(clientes.reduce((s,c)=>s+(+c.has_total||0),0))}</div></div>
     <div class="card-stat"><div class="cs-label">Trigo</div><div class="cs-val">${fmt(clientes.reduce((s,c)=>s+(+c.has_trigo||0),0))}</div></div>
-    <div class="card-stat"><div class="cs-label">Maíz</div><div class="cs-val">${fmt(clientes.reduce((s,c)=>s+(+c.has_maiz||0),0))}</div></div>
-    <div class="card-stat"><div class="cs-label">Soja</div><div class="cs-val">${fmt(clientes.reduce((s,c)=>s+(+c.has_soja||0),0))}</div></div>
   `;
 
   const tbody=document.getElementById('cliBody');
   if(!f.length){
-    tbody.innerHTML=`<tr><td colspan="13"><div class="empty"><div class="empty-icon">👥</div><p>${q?'Sin resultados':'Sin clientes aún. Agregá el primero.'}</p></div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="14"><div class="empty"><div class="empty-icon">👥</div><p>${q?'Sin resultados':'Sin clientes aún.'}</p></div></td></tr>`;
     return;
   }
   const n=v=>v?fmt(v):'—';
-  tbody.innerHTML=f.map(c=>`
-    <tr>
-      <td><strong style="color:${c.socio==='no'?'#ef4444':'var(--g800)'}">${c.nombre}</strong></td>
+
+  tbody.innerHTML=f.map(c=>{
+    const cultivos=getCultivosACosecha(c.nombre);
+    const tieneCosecha=cultivos.length>0;
+
+    // Cobertura pills
+    let cobPills='';
+    if(tieneCosecha){
+      cobPills=cultivos.map(cult=>{
+        const cob=getCobertura(c.id,cult);
+        const seguro=cob?.seguro==='si';
+        const forward=cob?.forward==='si';
+        return`<div style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:2px 7px;margin:1px;font-size:11px;font-weight:600;color:#1e40af;">
+          <span>${cult}</span>
+          <span onclick="toggleCobertura('${c.id}','${cult}','seguro')" style="cursor:pointer;font-size:13px;title='Seguro'">${seguro?'🛡️':'🔴'}</span>
+          <span onclick="toggleCobertura('${c.id}','${cult}','forward')" style="cursor:pointer;font-size:13px;" title="Forward">${forward?'📊':'🔴'}</span>
+        </div>`;
+      }).join('');
+    }
+
+    const nombreColor=c.socio==='no'?'#ef4444':tieneCosecha?'#1d4ed8':'var(--g800)';
+    const nombreExtra=tieneCosecha?` <span style="font-size:11px;background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 5px;font-weight:700;">🌾 cosecha</span>`:'';
+
+    return`<tr>
+      <td>
+        <strong style="color:${nombreColor}">${c.nombre}</strong>${nombreExtra}
+        ${cobPills?`<div style="margin-top:4px;">${cobPills}</div>`:''}
+      </td>
       <td>${c.socio==='no'?'<span class="badge badge-red">No socio</span>':'<span class="badge badge-green">Socio</span>'}</td>
       <td class="td-num td-green">${n(c.has_total)}</td>
       <td class="td-num">${n(c.has_trigo)}</td>
@@ -530,7 +612,8 @@ function renderClientes(){
       <td><div class="td-actions">
         <button class="btn btn-secondary btn-sm" onclick="openClienteModal('${c.id}')">✏️</button>
       </div></td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function openClienteModal(id){
