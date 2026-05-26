@@ -796,6 +796,7 @@ function renderPedidos(){
 
 function openPedidoModal(id){
   editingPed=id||null;
+  loadPreciosCache(); // cargar productos de precios
   document.getElementById('pedModalTitle').textContent=id?'Editar Pedido':'Nuevo Pedido';
   document.getElementById('pedDelBtn').style.display=id?'block':'none';
   // Llenar select clientes
@@ -824,13 +825,61 @@ function addPedItem(item){
   const n=pedItemCount;
   const div=document.createElement('div');
   div.id=`pitem_${n}`;
-  div.style.cssText='display:grid;grid-template-columns:1fr 80px 60px auto;gap:6px;margin-bottom:6px;align-items:center;';
+  div.style.cssText='position:relative;display:grid;grid-template-columns:1fr 80px 60px auto;gap:6px;margin-bottom:6px;align-items:start;';
+
   div.innerHTML=`
-    <input placeholder="Producto" value="${item?.prod||''}" style="padding:8px;border:1.5px solid var(--g200);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;">
-    <input type="number" placeholder="Cant." value="${item?.cant||''}" style="padding:8px;border:1.5px solid var(--g200);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;">
-    <input placeholder="Unid." value="${item?.unit||'LTS'}" style="padding:8px;border:1.5px solid var(--g200);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;">
-    <button onclick="document.getElementById('pitem_${n}').remove()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:14px;">✕</button>`;
+    <div style="position:relative;">
+      <input id="pprod_${n}" placeholder="Buscar producto..." value="${item?.prod||''}" 
+        autocomplete="off"
+        style="width:100%;padding:8px;border:1.5px solid var(--g200);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;"
+        oninput="showProdSuggestions(${n})"
+        onfocus="showProdSuggestions(${n})"
+        onblur="setTimeout(()=>hideSuggestions(${n}),200)">
+      <div id="psugg_${n}" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--g);border-radius:0 0 8px 8px;z-index:999;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
+    </div>
+    <input id="pcant_${n}" type="number" placeholder="Cant." value="${item?.cant||''}" style="padding:8px;border:1.5px solid var(--g200);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;">
+    <input id="punit_${n}" placeholder="Unid." value="${item?.unit||'LTS'}" style="padding:8px;border:1.5px solid var(--g200);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;">
+    <button onclick="document.getElementById('pitem_${n}').remove()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:14px;margin-top:1px;">✕</button>`;
+
   document.getElementById('pedItems').appendChild(div);
+}
+
+// Cache de productos de precios (se carga al abrir el modal)
+let preciosCache=[];
+
+async function loadPreciosCache(){
+  try{
+    const data=await sb('/rest/v1/afa_precios?select=name,unit&order=name');
+    preciosCache=data||[];
+  }catch(e){ preciosCache=[]; }
+}
+
+function showProdSuggestions(n){
+  const input=document.getElementById(`pprod_${n}`);
+  const sugg=document.getElementById(`psugg_${n}`);
+  const q=input.value.trim().toLowerCase();
+  const matches=preciosCache.filter(p=>p.name.toLowerCase().includes(q)).slice(0,8);
+  if(!matches.length){sugg.style.display='none';return;}
+  sugg.innerHTML=matches.map(p=>`
+    <div onclick="selectProd(${n},'${p.name.replace(/'/g,"\\'")}','${p.unit}')"
+      style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--g100);"
+      onmouseover="this.style.background='var(--gl)'" onmouseout="this.style.background='white'">
+      <strong>${p.name}</strong> <span style="color:var(--g400);font-size:11px;">${p.unit}</span>
+    </div>`).join('');
+  sugg.style.display='block';
+}
+
+function selectProd(n, name, unit){
+  document.getElementById(`pprod_${n}`).value=name;
+  document.getElementById(`punit_${n}`).value=unit;
+  hideSuggestions(n);
+  // Focus en cantidad
+  setTimeout(()=>document.getElementById(`pcant_${n}`).focus(),50);
+}
+
+function hideSuggestions(n){
+  const s=document.getElementById(`psugg_${n}`);
+  if(s)s.style.display='none';
 }
 
 function toggleCosecha(){
@@ -843,8 +892,11 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 function getPedItems(){
   return [...document.getElementById('pedItems').children].map(div=>{
-    const ins=div.querySelectorAll('input');
-    return {prod:ins[0].value.trim(),cant:ins[1].value,unit:ins[2].value};
+    const n=div.id.replace('pitem_','');
+    const prod=document.getElementById(`pprod_${n}`)?.value.trim()||'';
+    const cant=document.getElementById(`pcant_${n}`)?.value||'';
+    const unit=document.getElementById(`punit_${n}`)?.value||'';
+    return {prod,cant,unit};
   }).filter(i=>i.prod);
 }
 
