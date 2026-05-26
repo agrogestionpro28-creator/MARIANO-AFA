@@ -161,6 +161,7 @@ tr:hover td{background:var(--g50);}
     <button class="hn active" onclick="showView('clientes')">👥 Clientes</button>
     <button class="hn" onclick="showView('pedidos')">📋 Pedidos</button>
     <button class="hn" onclick="showView('objetivos')">🎯 Objetivos</button>
+    <button class="hn" onclick="showView('ventas')">📊 Ventas</button>
     <button class="hn" onclick="showView('agenda')">📌 Agenda</button>
     <a href="index.html" class="hn back">💰 Precios →</a>
   </div>
@@ -287,6 +288,66 @@ tr:hover td{background:var(--g50);}
     </div>
   </div>
   <div id="notaList"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     VENTAS
+═══════════════════════════════════════════ -->
+<div id="v-ventas" class="view">
+  <div class="sec-title">
+    <div><h2>📊 Ventas por Producto</h2><p>Campaña 2026/2027</p></div>
+    <div class="sec-actions">
+      <button class="btn btn-secondary btn-sm" onclick="exportVentasXLS()">⬇ Excel</button>
+      <button class="btn btn-secondary btn-sm" onclick="toggleVentasGraficos()">📈 Gráficos</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="cards-row" id="ventasStats"></div>
+
+  <!-- GRÁFICOS (colapsables) -->
+  <div id="ventasGraficos" style="display:none;margin-bottom:20px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      <div style="background:white;border-radius:12px;border:1.5px solid var(--g200);padding:16px;box-shadow:var(--sh);">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:var(--g600);margin-bottom:10px;">TOP PRODUCTOS VENDIDOS</div>
+        <canvas id="chartBarras" height="220"></canvas>
+      </div>
+      <div style="background:white;border-radius:12px;border:1.5px solid var(--g200);padding:16px;box-shadow:var(--sh);">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:var(--g600);margin-bottom:10px;">DISTRIBUCIÓN POR FORMA DE PAGO</div>
+        <canvas id="chartTorta" height="220"></canvas>
+      </div>
+    </div>
+    <div style="background:white;border-radius:12px;border:1.5px solid var(--g200);padding:16px;box-shadow:var(--sh);">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:var(--g600);margin-bottom:10px;">EVOLUCIÓN DE PEDIDOS POR FECHA</div>
+      <canvas id="chartLinea" height="100"></canvas>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="search-row" style="margin-bottom:14px;">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="ventasProd" placeholder="Filtrar por producto..." oninput="renderVentas()">
+    </div>
+    <div class="search-box">
+      <span class="search-icon">👤</span>
+      <input type="text" id="ventasCli" placeholder="Filtrar por cliente..." oninput="renderVentas()">
+    </div>
+    <select id="ventasPago" onchange="renderVentas()" style="padding:9px 11px;border:1.5px solid var(--g200);border-radius:9px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;background:white;color:var(--g800);">
+      <option value="">Todas las formas de pago</option>
+      <option value="Contado">Contado</option>
+      <option value="Contado canje">Contado canje</option>
+      <option value="U$S Dic (trigo)">U$S Dic (trigo)</option>
+      <option value="U$S Feb (girasol)">U$S Feb (girasol)</option>
+      <option value="U$S Abr (maíz/sorgo)">U$S Abr (maíz/sorgo)</option>
+      <option value="U$S May (soja)">U$S May (soja)</option>
+      <option value="U$S Jul (maíz 2da)">U$S Jul (maíz 2da)</option>
+    </select>
+    <button class="btn btn-secondary btn-sm" onclick="clearVentasFiltros()">✕ Limpiar</button>
+  </div>
+
+  <!-- LISTA POR PRODUCTO -->
+  <div id="ventasList"></div>
 </div>
 
 </main>
@@ -1281,6 +1342,278 @@ async function init(){
   await Promise.all([loadClientes(),loadPedidos(),loadObjetivos(),loadNotas()]);
 }
 init();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+// ══════════════════════════════════════════
+// VENTAS
+// ══════════════════════════════════════════
+let chartBarras=null,chartTorta=null,chartLinea=null;
+let graficosVisible=false;
+
+function toggleVentasGraficos(){
+  graficosVisible=!graficosVisible;
+  document.getElementById('ventasGraficos').style.display=graficosVisible?'block':'none';
+  if(graficosVisible)renderGraficos();
+}
+
+function clearVentasFiltros(){
+  document.getElementById('ventasProd').value='';
+  document.getElementById('ventasCli').value='';
+  document.getElementById('ventasPago').value='';
+  renderVentas();
+}
+
+// Construir índice de ventas por producto
+function buildVentasIndex(){
+  const idx={};
+  pedidos.forEach(p=>{
+    const items=p.items?JSON.parse(p.items):[];
+    items.forEach(i=>{
+      if(!i.prod)return;
+      if(!idx[i.prod])idx[i.prod]={prod:i.prod,unit:i.unit||'',totalCant:0,clientes:{}};
+      idx[i.prod].totalCant+=+i.cant||0;
+      if(!idx[i.prod].clientes[p.cliente])idx[i.prod].clientes[p.cliente]=[];
+      idx[i.prod].clientes[p.cliente].push({
+        cant:+i.cant||0,
+        fecha:p.fecha,
+        pago:p.forma_pago||'Sin definir',
+        pedidoId:p.id
+      });
+    });
+  });
+  return idx;
+}
+
+function renderVentas(){
+  const qProd=document.getElementById('ventasProd').value.trim().toLowerCase();
+  const qCli=document.getElementById('ventasCli').value.trim().toLowerCase();
+  const qPago=document.getElementById('ventasPago').value;
+
+  // Filtrar pedidos según filtros
+  let pedFilt=pedidos;
+  if(qCli)pedFilt=pedFilt.filter(p=>(p.cliente||'').toLowerCase().includes(qCli));
+  if(qPago)pedFilt=pedFilt.filter(p=>p.forma_pago===qPago);
+
+  // Construir índice con pedidos filtrados
+  const idx={};
+  pedFilt.forEach(p=>{
+    const items=p.items?JSON.parse(p.items):[];
+    items.forEach(i=>{
+      if(!i.prod)return;
+      if(qProd&&!i.prod.toLowerCase().includes(qProd))return;
+      if(!idx[i.prod])idx[i.prod]={prod:i.prod,unit:i.unit||'',totalCant:0,clientes:{}};
+      idx[i.prod].totalCant+=+i.cant||0;
+      if(!idx[i.prod].clientes[p.cliente])idx[i.prod].clientes[p.cliente]=[];
+      idx[i.prod].clientes[p.cliente].push({cant:+i.cant||0,fecha:p.fecha,pago:p.forma_pago||'Sin definir',pedidoId:p.id});
+    });
+  });
+
+  const prods=Object.values(idx).sort((a,b)=>b.totalCant-a.totalCant);
+
+  // Stats
+  const totalPedidos=pedFilt.length;
+  const totalProds=prods.length;
+  const totalClis=new Set(pedFilt.map(p=>p.cliente)).size;
+  document.getElementById('ventasStats').innerHTML=`
+    <div class="card-stat"><div class="cs-label">Pedidos</div><div class="cs-val">${totalPedidos}</div></div>
+    <div class="card-stat"><div class="cs-label">Productos distintos</div><div class="cs-val">${totalProds}</div></div>
+    <div class="card-stat"><div class="cs-label">Clientes</div><div class="cs-val">${totalClis}</div></div>
+  `;
+
+  const list=document.getElementById('ventasList');
+  if(!prods.length){
+    list.innerHTML=`<div class="empty"><div class="empty-icon">📊</div><p>Sin ventas registradas aún.</p></div>`;
+    return;
+  }
+
+  list.innerHTML=prods.map(p=>{
+    const cliList=Object.entries(p.clientes).sort((a,b)=>
+      b[1].reduce((s,x)=>s+x.cant,0)-a[1].reduce((s,x)=>s+x.cant,0)
+    );
+    const cliRows=cliList.map(([cli,ops])=>{
+      const totalCli=ops.reduce((s,x)=>s+x.cant,0);
+      const opsRows=ops.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).map(op=>`
+        <tr style="background:var(--g50);">
+          <td style="padding:5px 12px 5px 32px;font-size:12px;color:var(--g600);">
+            📅 ${op.fecha?new Date(op.fecha+'T12:00:00').toLocaleDateString('es-AR'):'—'}
+          </td>
+          <td style="padding:5px 12px;font-size:12px;text-align:right;font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--g);">
+            ${Number(op.cant).toLocaleString('es-AR')} ${p.unit}
+          </td>
+          <td style="padding:5px 12px;font-size:11px;color:var(--g400);">${op.pago}</td>
+          <td></td>
+        </tr>`).join('');
+      return`
+        <tr class="cli-row" style="cursor:pointer;" onclick="toggleCliDetalle('${p.prod.replace(/'/g,'\\'')}','${cli.replace(/'/g,'\\'')}')">
+          <td style="padding:8px 12px 8px 20px;font-size:13px;">
+            <span style="color:var(--g600);">↳</span> <strong>${cli}</strong>
+          </td>
+          <td style="padding:8px 12px;text-align:right;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:var(--g800);">
+            ${Number(totalCli).toLocaleString('es-AR')} <span style="font-size:11px;color:var(--g400);">${p.unit}</span>
+          </td>
+          <td style="padding:8px 12px;">
+            <span class="badge ${isCosecha(ops[0]?.pago)?'badge-blue':'badge-green'}" style="font-size:10px;">${ops[0]?.pago||'—'}</span>
+          </td>
+          <td style="padding:8px 12px;text-align:right;">
+            <span style="font-size:11px;color:var(--g400);">${ops.length} pedido${ops.length!==1?'s':''} ▾</span>
+          </td>
+        </tr>
+        <tbody id="det_${p.prod.replace(/\s/g,'_')}_${cli.replace(/\s/g,'_')}" style="display:none;">${opsRows}</tbody>`;
+    }).join('');
+
+    return`<div class="tbl-wrap" style="margin-bottom:12px;">
+      <table>
+        <thead>
+          <tr style="cursor:pointer;" onclick="toggleProdDetalle('${p.prod.replace(/'/g,'\\'')}')">
+            <th style="font-size:15px;color:var(--g800);text-transform:none;letter-spacing:0;">
+              <strong>${p.prod}</strong>
+            </th>
+            <th style="text-align:right;">
+              <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:var(--g);">${Number(p.totalCant).toLocaleString('es-AR')}</span>
+              <span style="font-size:11px;color:var(--g400);font-weight:400;"> ${p.unit}</span>
+            </th>
+            <th>${cliList.length} cliente${cliList.length!==1?'s':''}</th>
+            <th style="text-align:right;font-size:11px;color:var(--g400);font-weight:400;">▾ ver detalle</th>
+          </tr>
+        </thead>
+        <tbody id="prod_${p.prod.replace(/\s/g,'_')}" style="display:none;">
+          ${cliRows}
+        </tbody>
+      </table>
+    </div>`;
+  }).join('');
+}
+
+function toggleProdDetalle(prod){
+  const id='prod_'+prod.replace(/\s/g,'_');
+  const el=document.getElementById(id);
+  if(el)el.style.display=el.style.display==='none'?'':'none';
+}
+
+function toggleCliDetalle(prod,cli){
+  const id='det_'+prod.replace(/\s/g,'_')+'_'+cli.replace(/\s/g,'_');
+  const el=document.getElementById(id);
+  if(el)el.style.display=el.style.display==='none'?'':'none';
+}
+
+// ── GRÁFICOS ──
+function renderGraficos(){
+  const idx=buildVentasIndex();
+  const prods=Object.values(idx).sort((a,b)=>b.totalCant-a.totalCant).slice(0,10);
+
+  // Colores
+  const COLORS=['#2EAA6E','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#84cc16','#06b6d4'];
+
+  // 1. BARRAS — top productos
+  if(chartBarras)chartBarras.destroy();
+  const ctxB=document.getElementById('chartBarras').getContext('2d');
+  chartBarras=new Chart(ctxB,{
+    type:'bar',
+    data:{
+      labels:prods.map(p=>p.prod.length>18?p.prod.substring(0,18)+'...':p.prod),
+      datasets:[{
+        label:'Vendido',
+        data:prods.map(p=>p.totalCant),
+        backgroundColor:COLORS,
+        borderRadius:6,
+        borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true,ticks:{font:{size:11}}},x:{ticks:{font:{size:10}}}}
+    }
+  });
+
+  // 2. TORTA — por forma de pago
+  const pagoIdx={};
+  pedidos.forEach(p=>{
+    const k=p.forma_pago||'Sin definir';
+    pagoIdx[k]=(pagoIdx[k]||0)+1;
+  });
+  if(chartTorta)chartTorta.destroy();
+  const ctxT=document.getElementById('chartTorta').getContext('2d');
+  chartTorta=new Chart(ctxT,{
+    type:'doughnut',
+    data:{
+      labels:Object.keys(pagoIdx),
+      datasets:[{data:Object.values(pagoIdx),backgroundColor:COLORS,borderWidth:2,borderColor:'white'}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}}
+    }
+  });
+
+  // 3. LÍNEA — pedidos por fecha
+  const fechaIdx={};
+  pedidos.forEach(p=>{
+    if(!p.fecha)return;
+    fechaIdx[p.fecha]=(fechaIdx[p.fecha]||0)+1;
+  });
+  const fechas=Object.keys(fechaIdx).sort();
+  if(chartLinea)chartLinea.destroy();
+  const ctxL=document.getElementById('chartLinea').getContext('2d');
+  chartLinea=new Chart(ctxL,{
+    type:'line',
+    data:{
+      labels:fechas.map(f=>new Date(f+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})),
+      datasets:[{
+        label:'Pedidos',
+        data:fechas.map(f=>fechaIdx[f]),
+        borderColor:'#2EAA6E',
+        backgroundColor:'rgba(46,170,110,.1)',
+        borderWidth:2,
+        tension:.3,
+        fill:true,
+        pointBackgroundColor:'#2EAA6E',
+        pointRadius:4
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true,ticks:{stepSize:1}},x:{ticks:{font:{size:10}}}}
+    }
+  });
+}
+
+// ── EXPORT ──
+function exportVentasXLS(){
+  const idx=buildVentasIndex();
+  const rows=[];
+  Object.values(idx).forEach(p=>{
+    Object.entries(p.clientes).forEach(([cli,ops])=>{
+      ops.forEach(op=>{
+        rows.push({
+          'Producto':p.prod,'Unidad':p.unit,
+          'Cliente':cli,'Cantidad':op.cant,
+          'Fecha':op.fecha,'Forma de pago':op.pago
+        });
+      });
+    });
+  });
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Ventas');
+  XLSX.writeFile(wb,'AFA-Ventas-2026-2027.xlsx');
+}
+
+// Renderizar ventas cuando se abre la vista
+const _origShowView=showView;
+function showView(v){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.hn').forEach(x=>x.classList.remove('active'));
+  document.getElementById('v-'+v).classList.add('active');
+  event.target.classList.add('active');
+  if(v==='clientes')renderClientes();
+  if(v==='pedidos')renderPedidos();
+  if(v==='objetivos')renderObjetivos();
+  if(v==='agenda')renderNotas();
+  if(v==='ventas'){renderVentas();if(graficosVisible)renderGraficos();}
+}
 </script>
 </body>
 </html>
