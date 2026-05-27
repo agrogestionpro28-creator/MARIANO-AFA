@@ -1112,12 +1112,49 @@ async function reloadObjetivos(){
   try{objetivos=await sb('/rest/v1/afa_objetivos?select=*&order=producto');}catch(e){}
 }
 
-function calcVendidoPedidos(producto){
+// ── MAPEO PRODUCTOS → OBJETIVOS ──
+const PROD_OBJETIVO={
+  'Glifosato 66,2%':'Glifosato',
+  'Roundup Max':'Glifosato',
+  '2,4D Cleaspray EHE':'2,4 D Etil exil',
+  '2,4D EHE':'2,4 D Etil exil',
+  'Atrazina 50%':'Atrazina',
+  'S-Metolaclor':'S-Metolaclor',
+  'Terbutilazina':'Terbutilazina',
+  'Sulfentrazone 50%':'Sulfentrazone',
+  'Flumioxazin':'Flumioxazin',
+  'Cletodim 24%':'Cletodim',
+  'Cletodim 24% (alt)':'Cletodim',
+  'Haloxifop 54%':'Haloxifop',
+  'Imida 20%-Lambda 10%':'Imida - Lambdac',
+  'MSO Fideplus':'MSO Siliconado',
+  'Azoxi 20%-Cipro 8%':'Azoxi - Cipro',
+  'Inoculante Soja':'Inoculante',
+  'Urea Granulada Granel':'Urea',
+  'Urea Protegida Granel':'Urea Protegida',
+  'Mezcla Química NPS Granel':'Mezcla Qca NPS',
+  '12-40-0-5-1 Mezcla Química Granel':'Mezcla 12-40',
+  'Solmix (80-20)':'Solmix',
+  'NK 3939 CL B1':'Girasol',
+};
+
+function calcVendidoPedidos(objetivo){
+  // Obtener todos los productos que mapean a este objetivo
+  const prods=Object.entries(PROD_OBJETIVO)
+    .filter(([,obj])=>obj===objetivo)
+    .map(([prod])=>prod.toLowerCase());
+  
+  // Si no hay mapeo, buscar por nombre directo
+  if(!prods.length) prods.push(objetivo.toLowerCase());
+
   let total=0;
   pedidos.forEach(p=>{
     const items=p.items?JSON.parse(p.items):[];
     items.forEach(i=>{
-      if(i.prod&&i.prod.toLowerCase().includes(producto.toLowerCase()))
+      if(!i.prod)return;
+      const nombreProd=i.prod.toLowerCase();
+      // Buscar coincidencia exacta o por mapeo
+      if(prods.some(mp=>nombreProd===mp||nombreProd.includes(mp)||mp.includes(nombreProd)))
         total+=+i.cant||0;
     });
   });
