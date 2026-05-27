@@ -485,6 +485,36 @@ tr:hover td{background:var(--g50);}
   </div>
 </div>
 
+<!-- MODAL DETALLE PRODUCTO FOCO -->
+<div class="modal-bg" id="modalDetalleFoco">
+  <div class="modal" style="max-width:680px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+      <div>
+        <h2 id="detalleNombre" style="margin-bottom:2px;">Producto</h2>
+        <div id="detalleResumen" style="font-size:13px;color:var(--g400);"></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="exportDetalleFoco()">⬇ Excel</button>
+        <button class="btn btn-secondary" onclick="closeModal('modalDetalleFoco')">✕ Cerrar</button>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Producto (nombre exacto)</th>
+            <th class="td-num">Cantidad</th>
+            <th>Forma de pago</th>
+          </tr>
+        </thead>
+        <tbody id="detalleFocoBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL NOTA -->
 <div class="modal-bg" id="modalNota">
   <div class="modal">
@@ -1203,34 +1233,35 @@ function renderObjetivos(){
     const pctReal=o.meta>0?vtotal/o.meta*100:0;
     const c=getColor(pctReal);
     const fmtN=n=>Number(n).toLocaleString('es-AR');
-    return`<div style="background:${c.bg};border:1.5px solid ${c.border};border-radius:14px;padding:16px 18px;position:relative;cursor:pointer;" onclick="openObjetivoModal('${o.id}')">
+    return`<div style="background:${c.bg};border:1.5px solid ${c.border};border-radius:14px;padding:16px 18px;position:relative;" >
       <!-- Semáforo dot -->
-      <div style="position:absolute;top:12px;right:12px;width:12px;height:12px;border-radius:50%;background:${c.bar};box-shadow:0 0 6px ${c.bar}"></div>
-      <!-- Nombre y unidad -->
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:${c.text};line-height:1.1;margin-bottom:2px;padding-right:20px;">${o.producto}</div>
-      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.text};opacity:.6;margin-bottom:12px;">${o.unit}</div>
-      <!-- % grande -->
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:42px;color:${c.text};line-height:1;margin-bottom:6px;">${pctReal.toFixed(1)}<span style="font-size:20px">%</span></div>
-      <!-- Barra -->
-      <div style="background:rgba(0,0,0,.08);border-radius:20px;height:6px;margin-bottom:10px;overflow:hidden;">
-        <div style="height:100%;border-radius:20px;background:${c.bar};width:${pct}%;transition:width .4s;"></div>
+      <div style="position:absolute;top:12px;right:36px;width:12px;height:12px;border-radius:50%;background:${c.bar};box-shadow:0 0 6px ${c.bar}"></div>
+      <!-- Botón editar -->
+      <button onclick="openObjetivoModal('${o.id}')" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.08);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:12px;" title="Editar">✏️</button>
+      <!-- Cuerpo clickeable → detalle -->
+      <div onclick="openDetalleFoco('${o.id}')" style="cursor:pointer;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:${c.text};line-height:1.1;margin-bottom:2px;padding-right:20px;">${o.producto}</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${c.text};opacity:.6;margin-bottom:12px;">${o.unit}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:42px;color:${c.text};line-height:1;margin-bottom:6px;">${pctReal.toFixed(1)}<span style="font-size:20px">%</span></div>
+        <div style="background:rgba(0,0,0,.08);border-radius:20px;height:6px;margin-bottom:10px;overflow:hidden;">
+          <div style="height:100%;border-radius:20px;background:${c.bar};width:${pct}%;transition:width .4s;"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
+          <div style="text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:${c.text};">${fmtN(vtotal)}</div>
+            <div style="font-size:9px;color:${c.text};opacity:.6;font-weight:700;letter-spacing:.5px;">VENDIDO</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:${c.text};">${fmtN(o.meta)}</div>
+            <div style="font-size:9px;color:${c.text};opacity:.6;font-weight:700;letter-spacing:.5px;">OBJETIVO</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:${c.text};">${fmtN(resto)}</div>
+            <div style="font-size:9px;color:${c.text};opacity:.6;font-weight:700;letter-spacing:.5px;">RESTO</div>
+          </div>
+        </div>
+        ${vped>0?`<div style="font-size:10px;color:${c.text};opacity:.5;margin-top:8px;border-top:1px solid rgba(0,0,0,.06);padding-top:6px;">+${fmtN(vped)} desde pedidos</div>`:''}
       </div>
-      <!-- Números -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
-        <div style="text-align:center;">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:${c.text};">${fmtN(vtotal)}</div>
-          <div style="font-size:9px;color:${c.text};opacity:.6;font-weight:700;letter-spacing:.5px;">VENDIDO</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:${c.text};">${fmtN(o.meta)}</div>
-          <div style="font-size:9px;color:${c.text};opacity:.6;font-weight:700;letter-spacing:.5px;">OBJETIVO</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:${c.text};">${fmtN(resto)}</div>
-          <div style="font-size:9px;color:${c.text};opacity:.6;font-weight:700;letter-spacing:.5px;">RESTO</div>
-        </div>
-      </div>
-      ${vped>0?`<div style="font-size:10px;color:${c.text};opacity:.5;margin-top:8px;border-top:1px solid rgba(0,0,0,.06);padding-top:6px;">+${fmtN(vped)} desde pedidos</div>`:''}
     </div>`;
   }).join('');
 
@@ -1238,7 +1269,100 @@ function renderObjetivos(){
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;">${html}</div>`;
 }
 
-function openObjetivoModal(id){
+// ── DETALLE PRODUCTO FOCO ──
+let detalleActualObj=null;
+
+function openDetalleFoco(id){
+  const o=objetivos.find(x=>x.id===id);
+  if(!o)return;
+  detalleActualObj=o;
+
+  // Obtener productos mapeados
+  const prods=Object.entries(PROD_OBJETIVO)
+    .filter(([,obj])=>obj===o.producto)
+    .map(([prod])=>prod.toLowerCase());
+  if(!prods.length)prods.push(o.producto.toLowerCase());
+
+  // Recolectar todas las líneas de pedidos que corresponden
+  const rows=[];
+  pedidos.forEach(p=>{
+    const items=p.items?JSON.parse(p.items):[];
+    items.forEach(i=>{
+      if(!i.prod)return;
+      const np=i.prod.toLowerCase();
+      if(prods.some(mp=>np===mp||np.includes(mp)||mp.includes(np))){
+        rows.push({
+          fecha:p.fecha,
+          cliente:p.cliente||'—',
+          producto:i.prod,
+          cant:+i.cant||0,
+          unit:i.unit||o.unit,
+          pago:p.forma_pago||'Sin definir'
+        });
+      }
+    });
+  });
+
+  // Ordenar por fecha desc
+  rows.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+
+  const vtotal=(+o.vendido_inicial||0)+rows.reduce((s,r)=>s+r.cant,0);
+  const pct=o.meta>0?(vtotal/o.meta*100).toFixed(1):0;
+
+  document.getElementById('detalleNombre').textContent=o.producto;
+  document.getElementById('detalleResumen').textContent=
+    `Total vendido: ${Number(vtotal).toLocaleString('es-AR')} ${o.unit} · Objetivo: ${Number(o.meta).toLocaleString('es-AR')} · ${pct}%`;
+
+  const tbody=document.getElementById('detalleFocoBody');
+  if(!rows.length){
+    tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--g400);">Sin pedidos registrados aún</td></tr>`;
+  } else {
+    tbody.innerHTML=rows.map(r=>`
+      <tr>
+        <td>${r.fecha?new Date(r.fecha+'T12:00:00').toLocaleDateString('es-AR'):'—'}</td>
+        <td><strong>${r.cliente}</strong></td>
+        <td style="font-size:12px;color:var(--g600);">${r.producto}</td>
+        <td class="td-num td-green"><strong>${Number(r.cant).toLocaleString('es-AR')}</strong> <span style="font-size:10px;color:var(--g400);">${r.unit}</span></td>
+        <td><span class="badge ${isCosecha(r.pago)?'badge-blue':'badge-green'}" style="font-size:10px;">${r.pago}</span></td>
+      </tr>`).join('');
+  }
+
+  document.getElementById('modalDetalleFoco').classList.add('open');
+}
+
+function exportDetalleFoco(){
+  if(!detalleActualObj)return;
+  const o=detalleActualObj;
+  const prods=Object.entries(PROD_OBJETIVO)
+    .filter(([,obj])=>obj===o.producto)
+    .map(([prod])=>prod.toLowerCase());
+  if(!prods.length)prods.push(o.producto.toLowerCase());
+
+  const rows=[];
+  pedidos.forEach(p=>{
+    const items=p.items?JSON.parse(p.items):[];
+    items.forEach(i=>{
+      if(!i.prod)return;
+      const np=i.prod.toLowerCase();
+      if(prods.some(mp=>np===mp||np.includes(mp)||mp.includes(np))){
+        rows.push({
+          'Fecha':p.fecha,
+          'Cliente':p.cliente||'',
+          'Producto':i.prod,
+          'Cantidad':+i.cant||0,
+          'Unidad':i.unit||o.unit,
+          'Forma de pago':p.forma_pago||'Sin definir'
+        });
+      }
+    });
+  });
+  rows.sort((a,b)=>new Date(b.Fecha)-new Date(a.Fecha));
+
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,o.producto.substring(0,31));
+  XLSX.writeFile(wb,`AFA-Foco-${o.producto.replace(/\s/g,'-')}.xlsx`);
+}
   editingObj=id||null;
   document.getElementById('objModalTitle').textContent=id?'Editar Producto Foco':'Nuevo Producto Foco';
   document.getElementById('objDelBtn').style.display=id?'block':'none';
