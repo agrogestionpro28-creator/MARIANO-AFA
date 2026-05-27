@@ -487,8 +487,9 @@ function calcVendidoPedidos(objetivo){
     const items=p.items?JSON.parse(p.items):[];
     items.forEach(i=>{
       if(!i.prod)return;
-      const np=i.prod.toLowerCase();
-      if(prods.some(mp=>np===mp||np.includes(mp)||mp.includes(np)))total+=+i.cant||0;
+      const np=i.prod.toLowerCase().trim();
+      // Solo coincidencia exacta — evita que "Urea" matchee "Urea Protegida"
+      if(prods.some(mp=>np===mp))total+=+i.cant||0;
     });
   });
   return total;
@@ -937,8 +938,8 @@ function openDetalleFoco(id){
     const items=p.items?JSON.parse(p.items):[];
     items.forEach(i=>{
       if(!i.prod)return;
-      const np=i.prod.toLowerCase();
-      if(prods.some(mp=>np===mp||np.includes(mp)||mp.includes(np)))
+      const np=i.prod.toLowerCase().trim();
+      if(prods.some(mp=>np===mp))
         rows.push({fecha:p.fecha,cliente:p.cliente||'—',producto:i.prod,cant:+i.cant||0,unit:i.unit||o.unit,pago:p.forma_pago||'Sin definir'});
     });
   });
@@ -969,7 +970,7 @@ function exportDetalleFoco(){
     items.forEach(i=>{
       if(!i.prod)return;
       const np=i.prod.toLowerCase();
-      if(prods.some(mp=>np===mp||np.includes(mp)||mp.includes(np)))
+      if(prods.some(mp=>np===mp))
         rows.push({'Fecha':p.fecha,'Cliente':p.cliente||'','Producto':i.prod,'Cantidad':+i.cant||0,'Unidad':i.unit||o.unit,'Forma de pago':p.forma_pago||''});
     });
   });
