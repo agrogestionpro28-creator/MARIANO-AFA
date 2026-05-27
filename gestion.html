@@ -580,6 +580,7 @@ function showView(v){
   if(v==='pedidos')renderPedidos();
   if(v==='objetivos')renderObjetivos();
   if(v==='agenda')renderNotas();
+  if(v==='ventas'){renderVentas();if(graficosVisible)renderGraficos();}
 }
 
 // ══════════════════════════════════════════
@@ -1762,19 +1763,7 @@ function exportVentasXLS(){
   XLSX.writeFile(wb,'AFA-Ventas-2026-2027.xlsx');
 }
 
-// Renderizar ventas cuando se abre la vista
-const _origShowView=showView;
-function showView(v){
-  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.hn').forEach(x=>x.classList.remove('active'));
-  document.getElementById('v-'+v).classList.add('active');
-  event.target.classList.add('active');
-  if(v==='clientes')renderClientes();
-  if(v==='pedidos')renderPedidos();
-  if(v==='objetivos')renderObjetivos();
-  if(v==='agenda')renderNotas();
-  if(v==='ventas'){renderVentas();if(graficosVisible)renderGraficos();}
-}
+// Renderizar ventas cuando se abre la vista - ya manejado en showView principal
 </script>
 </body>
 </html>
