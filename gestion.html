@@ -669,10 +669,15 @@ function renderPedidos(){
   const sinPago=pedidos.filter(p=>!p.forma_pago).length;
   const sinSeg=pedidos.filter(p=>isCosecha(p.forma_pago)&&p.seguro!=='si').length;
   const sinFwd=pedidos.filter(p=>isCosecha(p.forma_pago)&&p.forward!=='si').length;
+  const sinCodigo=pedidos.filter(p=>{
+    const items=p.items?JSON.parse(p.items):[];
+    return items.some(i=>i.prod&&!preciosCache.some(pc=>pc.name===i.prod));
+  }).length;
   let al='';
   if(sinPago)al+=`<div class="alert-box">⚠️ <strong>${sinPago} pedido${sinPago>1?'s':''} sin forma de pago</strong></div>`;
   if(sinSeg)al+=`<div class="alert-box">🛡️ <strong>${sinSeg} pedido${sinSeg>1?'s':''} a cosecha sin seguro</strong></div>`;
   if(sinFwd)al+=`<div class="alert-box">📊 <strong>${sinFwd} pedido${sinFwd>1?'s':''} a cosecha sin forward</strong></div>`;
+  if(sinCodigo)al+=`<div class="alert-box" style="background:#fffbeb;border-color:#fde68a;color:#92400e;">🔶 <strong>${sinCodigo} pedido${sinCodigo>1?'s':''} con productos sin código</strong> — no descuentan del objetivo</div>`;
   document.getElementById('pedAlertas').innerHTML=al;
   const list=document.getElementById('pedList');
   if(!f.length){list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><p>Sin pedidos aún</p></div>`;return;}
@@ -706,15 +711,34 @@ function addPedItem(item){
   div.style.cssText='position:relative;display:grid;grid-template-columns:1fr 80px 60px auto;gap:6px;margin-bottom:6px;align-items:start;';
   div.innerHTML=`
     <div style="position:relative;">
-      <input id="pprod_${n}" placeholder="Buscar producto..." value="${item&&item.prod?item.prod:''}" autocomplete="off"
-        style="width:100%;padding:8px;border:1.5px solid var(--g200);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;"
-        oninput="showSugg(${n})" onfocus="showSugg(${n})" onblur="setTimeout(()=>hideSugg(${n}),200)">
+      <input id="pprod_${n}" placeholder="Buscar o escribir producto..." value="${item&&item.prod?item.prod:''}" autocomplete="off"
+        data-valid="${item&&item.prod&&preciosCache.some(p=>p.name===item.prod)?'true':'false'}"
+        style="width:100%;padding:8px;border:1.5px solid var(--g200);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s;"
+        oninput="showSugg(${n});validateProd(${n})"
+        onfocus="showSugg(${n})"
+        onblur="setTimeout(()=>{hideSugg(${n});validateProd(${n})},200)">
       <div id="psugg_${n}" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--g);border-radius:0 0 8px 8px;z-index:999;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
+      <div id="pwarn_${n}" style="display:none;font-size:10px;color:#f59e0b;margin-top:2px;font-weight:600;">⚠️ Producto sin código — no descuenta del objetivo</div>
     </div>
     <input id="pcant_${n}" type="number" placeholder="Cant." value="${item&&item.cant?item.cant:''}" style="padding:8px;border:1.5px solid var(--g200);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;">
     <input id="punit_${n}" placeholder="Unid." value="${item&&item.unit?item.unit:'LTS'}" style="padding:8px;border:1.5px solid var(--g200);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;">
     <button onclick="document.getElementById('pitem_${n}').remove()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:14px;margin-top:1px;">✕</button>`;
   document.getElementById('pedItems').appendChild(div);
+  if(item&&item.prod){
+    setTimeout(()=>validateProd(n),100);
+  }
+}
+
+function validateProd(n){
+  const inp=document.getElementById('pprod_'+n);
+  const warn=document.getElementById('pwarn_'+n);
+  if(!inp)return;
+  const val=inp.value.trim();
+  if(!val){inp.style.borderColor='var(--g200)';inp.dataset.valid='false';warn.style.display='none';return;}
+  const exists=preciosCache.some(p=>p.name===val);
+  inp.style.borderColor=exists?'var(--g)':'#f59e0b';
+  inp.dataset.valid=exists?'true':'false';
+  warn.style.display=exists?'none':'block';
 }
 
 function showSugg(n){
@@ -731,8 +755,12 @@ function showSugg(n){
   sugg.style.display='block';
 }
 function selProd(n,name,unit){
-  document.getElementById('pprod_'+n).value=name;
+  const inp=document.getElementById('pprod_'+n);
+  inp.value=name;
+  inp.dataset.valid='true';
+  inp.style.borderColor='var(--g)';
   document.getElementById('punit_'+n).value=unit;
+  document.getElementById('pwarn_'+n).style.display='none';
   hideSugg(n);
   setTimeout(()=>document.getElementById('pcant_'+n).focus(),50);
 }
@@ -741,8 +769,19 @@ function hideSugg(n){const s=document.getElementById('psugg_'+n);if(s)s.style.di
 function getPedItems(){
   return [...document.getElementById('pedItems').children].map(div=>{
     const n=div.id.replace('pitem_','');
-    return{prod:document.getElementById('pprod_'+n)?.value.trim()||'',cant:document.getElementById('pcant_'+n)?.value||'',unit:document.getElementById('punit_'+n)?.value||''};
+    return{
+      prod:document.getElementById('pprod_'+n)?.value.trim()||'',
+      cant:document.getElementById('pcant_'+n)?.value||'',
+      unit:document.getElementById('punit_'+n)?.value||'',
+      valid:document.getElementById('pprod_'+n)?.dataset.valid==='true'
+    };
   }).filter(i=>i.prod);
+}
+
+function allItemsValid(){
+  const items=getPedItems();
+  if(!items.length)return false;
+  return items.every(i=>i.valid);
 }
 
 function toggleCosecha(){
@@ -777,6 +816,11 @@ async function savePedido(){
   if(!cliente){toast('Seleccioná un cliente');return;}
   const items=getPedItems();
   if(!items.length){toast('Agregá al menos un producto');return;}
+  const sinCodigo=items.filter(i=>!i.valid);
+  if(sinCodigo.length){
+    const ok=confirm(`${sinCodigo.length} producto${sinCodigo.length>1?'s':''} sin código (${sinCodigo.map(i=>i.prod).join(', ')}).\n\nSe va a guardar pero NO va a descontar del objetivo hasta que le asignes el código en la lista de precios.\n\n¿Guardar igual?`);
+    if(!ok)return;
+  }
   const obj={cliente,fecha:document.getElementById('pedFecha').value,items:JSON.stringify(items),
     forma_pago:document.getElementById('pedPago').value||null,
     seguro:document.getElementById('pedSeguro').value||null,
