@@ -7,168 +7,339 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
-  :root{--g:#2EAA6E;--gd:#1d7a4e;--gl:#e8f7f0;--gm:#c2ebd6;--g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;--g400:#9ca3af;--g600:#4b5563;--g800:#1f2937;--sh:0 4px 24px rgba(46,170,110,.10);--shl:0 8px 40px rgba(46,170,110,.18);}
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Barlow',sans-serif;background:var(--g50);min-height:100vh;color:var(--g800);}
+:root{
+  --g:#2EAA6E;--gd:#1d7a4e;--gold:#f59e0b;--gold-d:#d97706;
+  --bg:#0a0a0a;--bg2:#111;--bg3:#141414;--bg4:#1a1a1a;
+  --border:#252525;--border2:#333;
+  --text:white;--text2:rgba(255,255,255,.6);--text3:rgba(255,255,255,.3);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 
-  header{background:var(--g);padding:13px 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.15);}
-  .ht h1{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:19px;color:white;letter-spacing:.5px;line-height:1;}
-  .ht p{font-size:10px;color:rgba(255,255,255,.75);margin-top:2px;font-weight:500;letter-spacing:1px;text-transform:uppercase;}
-  .ha{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap;}
-  .bh{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:white;padding:7px 13px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:all .2s;white-space:nowrap;}
-  .bh:hover{background:rgba(255,255,255,.25);}
-  .bh.active{background:white;color:var(--g);}
-  .bh.sync{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.5);}
+/* HONEYCOMB BG */
+.hc-bg{
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100'%3E%3Cpath d='M28 66L0 50V16L28 0l28 16v34L28 66z' fill='none' stroke='%23f59e0b' stroke-opacity='0.05' stroke-width='1'/%3E%3Cpath d='M28 100L0 84V50l28-16 28 16v34L28 100z' fill='none' stroke='%23f59e0b' stroke-opacity='0.05' stroke-width='1'/%3E%3C/svg%3E");
+}
 
-  main{max-width:960px;margin:0 auto;padding:18px 13px 140px;}
+/* HEADER */
+header{
+  background:linear-gradient(135deg,#0f3d24 0%,#1a6640 40%,#2EAA6E 70%,#1a6640 100%);
+  padding:13px 20px;display:flex;align-items:center;gap:12px;
+  position:sticky;top:0;z-index:100;
+  border-bottom:2px solid rgba(245,158,11,0.4);
+  box-shadow:0 4px 30px rgba(46,170,110,0.25);
+  flex-wrap:wrap;
+}
+.afa-badge{
+  background:rgba(255,255,255,0.12);
+  border:1.5px solid rgba(245,158,11,0.5);
+  border-radius:8px;width:44px;height:44px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  box-shadow:0 2px 12px rgba(245,158,11,0.2),inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.afa-badge span{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;color:white;letter-spacing:-1px;}
+.htxt h1{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:19px;color:white;letter-spacing:.5px;line-height:1;}
+.htxt p{font-size:10px;color:rgba(255,255,255,.6);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;}
+.hnav{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.hn{
+  background:rgba(255,255,255,.08);border:1px solid rgba(245,158,11,.2);
+  color:rgba(255,255,255,.75);padding:6px 13px;border-radius:7px;
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;
+  letter-spacing:.5px;cursor:pointer;transition:all .2s;white-space:nowrap;
+  text-decoration:none;display:inline-flex;align-items:center;
+}
+.hn:hover{background:rgba(255,255,255,.15);border-color:rgba(245,158,11,.4);}
+.hn.active{background:var(--gold);border-color:var(--gold);color:#0a0a0a;font-weight:800;box-shadow:0 2px 12px rgba(245,158,11,0.35);}
+.hn.back{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.15);}
 
-  /* SYNC BANNER */
-  #syncBanner{background:var(--gl);border:1.5px solid var(--gm);border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--gd);}
-  #syncBanner.hidden{display:none;}
-  #syncBanner strong{font-weight:700;}
+/* MAIN */
+main{max-width:980px;margin:0 auto;padding:20px 16px 140px;position:relative;z-index:1;}
 
-  .sw{position:relative;margin-bottom:12px;}
-  .si{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--g);font-size:17px;pointer-events:none;}
-  #si{width:100%;padding:13px 13px 13px 46px;border:2px solid var(--gm);border-radius:12px;font-size:16px;font-family:'Barlow',sans-serif;background:white;color:var(--g800);outline:none;transition:all .2s;box-shadow:var(--sh);}
-  #si:focus{border-color:var(--g);box-shadow:var(--shl);}
-  #si::placeholder{color:var(--g400);}
+/* SECTION LABEL */
+.sec-lbl{
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;
+  color:var(--gold);letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:12px;display:flex;align-items:center;gap:8px;
+}
+.sec-lbl::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(245,158,11,.3),transparent);}
 
-  .cfs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;}
-  .cb{padding:5px 11px;border-radius:20px;border:1.5px solid var(--gm);background:white;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:12px;color:var(--g600);cursor:pointer;transition:all .2s;}
-  .cb:hover{border-color:var(--g);color:var(--g);}
-  .cb.active{background:var(--g);color:white;border-color:var(--g);}
+/* SYNC BANNER */
+#syncBanner{
+  background:linear-gradient(135deg,#1a1200,#130e00);
+  border:1px solid rgba(245,158,11,.3);border-radius:12px;
+  padding:11px 16px;margin-bottom:14px;font-size:13px;color:var(--gold);
+  display:flex;align-items:center;gap:8px;
+}
+#syncBanner.hidden{display:none;}
 
-  .rc{font-size:12px;color:var(--g400);margin-bottom:9px;padding-left:2px;}
-  #pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:11px;}
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:14px;}
+.search-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:16px;pointer-events:none;}
+#si{
+  width:100%;padding:13px 13px 13px 44px;
+  background:var(--bg4);
+  border:1px solid var(--border2);
+  border-radius:12px;font-size:16px;font-family:'Barlow',sans-serif;
+  color:white;outline:none;transition:all .2s;
+  box-shadow:0 4px 20px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.04);
+}
+#si:focus{border-color:var(--gold);box-shadow:0 4px 20px rgba(0,0,0,.4),0 0 0 3px rgba(245,158,11,.1),inset 0 1px 0 rgba(255,255,255,.04);}
+#si::placeholder{color:rgba(255,255,255,.25);}
 
-  .pc{background:white;border-radius:13px;border:1.5px solid var(--gm);padding:15px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
-  .pc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--g);border-radius:4px 0 0 4px;}
-  .pc:hover{border-color:var(--g);box-shadow:var(--shl);transform:translateY(-2px);}
-  .pc.sel{border-color:var(--g);background:var(--gl);box-shadow:var(--shl);}
-  .cc{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--g);margin-bottom:3px;}
-  .cn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;color:var(--g800);line-height:1.15;margin-bottom:7px;}
-  .cp{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--g);line-height:1;}
-  .cu{font-size:11px;color:var(--g400);margin-top:2px;}
-  .cid{font-size:9px;color:var(--g400);margin-top:5px;font-family:monospace;}
+/* CATEGORY FILTERS */
+.cfs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
+.cb{
+  padding:5px 13px;border-radius:20px;
+  border:1px solid var(--border2);background:var(--bg3);
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;
+  color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;
+}
+.cb:hover{border-color:rgba(245,158,11,.4);color:var(--gold);}
+.cb.active{background:var(--gold);color:#0a0a0a;border-color:var(--gold);box-shadow:0 2px 10px rgba(245,158,11,.3);}
 
-  /* PREVIEW */
-  #pp{display:none;position:fixed;bottom:0;left:0;right:0;background:white;border-top:2px solid var(--gm);padding:15px 18px;z-index:200;box-shadow:0 -8px 40px rgba(0,0,0,.12);}
-  .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-  .pt{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;color:var(--g800);}
-  .bcl2{background:var(--g100);border:none;width:29px;height:29px;border-radius:7px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--g600);}
-  .pi{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;}
-  #wc{background:var(--g);border-radius:13px;padding:16px 20px;min-width:270px;flex:1;color:white;position:relative;overflow:hidden;}
-  #wc::after{content:'';position:absolute;top:-25px;right:-25px;width:80px;height:80px;background:rgba(255,255,255,.06);border-radius:50%;}
-  .wla{display:flex;align-items:center;gap:8px;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,.2);padding-bottom:9px;}
-  .wo{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;opacity:.85;}
-  .wpr{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;line-height:1;margin-bottom:3px;}
-  .wd{font-size:12px;opacity:.75;margin-bottom:10px;}
-  .wrow{display:flex;align-items:baseline;gap:4px;}
-  .wc2{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;opacity:.8;}
-  .wpr2{font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:800;line-height:1;}
-  .wu{font-size:12px;opacity:.7;margin-top:2px;}
-  .wdate{font-size:10px;opacity:.55;margin-top:9px;border-top:1px solid rgba(255,255,255,.15);padding-top:7px;}
-  #ct{background:var(--g50);border:1px solid var(--g200);border-radius:9px;padding:10px 13px;font-size:12px;color:var(--g800);flex:1;min-width:190px;line-height:1.7;white-space:pre-wrap;font-family:'Barlow',sans-serif;}
-  .ab{display:flex;gap:8px;margin-top:10px;}
-  .ba{flex:1;padding:10px;border-radius:9px;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;}
-  .bcp{background:var(--gl);color:var(--gd);border:1.5px solid var(--gm);}
-  .bcp:hover{background:var(--gm);}
-  .bcp.copied{background:var(--g);color:white;}
-  .bss{background:var(--g);color:white;}
-  .bss:hover{background:var(--gd);}
+.rc{font-size:12px;color:rgba(255,255,255,.3);margin-bottom:10px;}
 
-  /* MODAL NUEVO / EDITAR PRODUCTO */
-  #prodModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;align-items:center;justify-content:center;padding:14px;}
-  #prodModal.open{display:flex;}
-  .mb{background:white;border-radius:17px;padding:22px;width:100%;max-width:440px;box-shadow:var(--shl);}
-  .mb h2{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:var(--g800);margin-bottom:16px;}
-  .fg{margin-bottom:12px;}
-  .fg label{display:block;font-size:11px;font-weight:700;color:var(--g600);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;}
-  .fg input,.fg select{width:100%;padding:9px 12px;border:1.5px solid var(--g200);border-radius:9px;font-size:15px;font-family:'Barlow',sans-serif;outline:none;color:var(--g800);transition:border-color .2s;}
-  .fg input:focus,.fg select:focus{border-color:var(--g);}
-  .ma{display:flex;gap:9px;margin-top:16px;}
-  .bcn{flex:1;padding:10px;border:1.5px solid var(--g200);border-radius:9px;background:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;cursor:pointer;color:var(--g600);}
-  .bsv{flex:2;padding:10px;border:none;border-radius:9px;background:var(--g);color:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;cursor:pointer;}
-  .bsv:hover{background:var(--gd);}
-  .bdel{padding:10px 14px;border:none;border-radius:9px;background:#fee2e2;color:#dc2626;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;cursor:pointer;}
-  .bdel:hover{background:#fca5a5;}
+/* PRODUCT GRID */
+#pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
 
-  /* EDIT LIST VIEW */
-  .elh{display:grid;grid-template-columns:1fr 130px 85px 60px auto;gap:5px;padding:0 11px;margin-bottom:3px;}
-  .elh span{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--g400);}
-  .ei{display:grid;grid-template-columns:1fr 130px 85px 60px auto;gap:5px;align-items:center;background:white;border:1.5px solid var(--g200);border-radius:9px;padding:7px 11px;margin-bottom:5px;}
-  .ei input{padding:5px 7px;border:1px solid var(--g200);border-radius:6px;font-size:12px;font-family:'Barlow',sans-serif;outline:none;width:100%;color:var(--g800);}
-  .ei input:focus{border-color:var(--g);}
-  .bde{background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;}
-  .bde:hover{background:#fca5a5;}
-  .bap{background:var(--gl);border:2px dashed var(--gm);border-radius:9px;padding:10px;width:100%;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:var(--g);cursor:pointer;margin-top:3px;}
-  .bap:hover{background:var(--gm);}
-  .bsl{background:var(--g);color:white;border:none;border-radius:11px;padding:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;cursor:pointer;margin-top:10px;width:100%;}
-  .bsl:hover{background:var(--gd);}
+/* PRODUCT CARD — 3D */
+.pc{
+  background:linear-gradient(145deg,var(--bg4) 0%,var(--bg3) 50%,var(--bg2) 100%);
+  border:1px solid var(--border);
+  border-top:1px solid var(--border2);
+  border-radius:14px;padding:16px;cursor:pointer;
+  position:relative;overflow:hidden;
+  box-shadow:0 8px 24px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.04);
+  transition:all .25s;
+}
+.pc::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--gold),var(--g));
+  border-radius:3px 0 0 3px;
+}
+.pc::after{
+  content:'';position:absolute;top:-8px;right:-8px;width:64px;height:64px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cpath d='M32 56L8 42V20L32 6l24 14v22L32 56z' fill='none' stroke='%23f59e0b' stroke-opacity='0.08' stroke-width='1.5'/%3E%3C/svg%3E");
+  pointer-events:none;
+}
+.pc:hover{
+  transform:translateY(-4px) scale(1.01);
+  border-color:rgba(46,170,110,.3);
+  box-shadow:0 14px 36px rgba(0,0,0,.6),0 4px 16px rgba(46,170,110,.12),inset 0 1px 0 rgba(255,255,255,.06);
+}
+.pc.sel{
+  border-color:var(--g);
+  box-shadow:0 14px 36px rgba(0,0,0,.6),0 4px 16px rgba(46,170,110,.2),inset 0 1px 0 rgba(46,170,110,.15);
+  background:linear-gradient(145deg,#081a10 0%,#061308 50%,#040f06 100%);
+}
+.pc.msel{border-color:var(--gold);background:linear-gradient(145deg,#1a1200,#130e00,#0f0a00);}
+.pc.msel::after{content:'✓';position:absolute;top:10px;right:12px;background:var(--gold);color:#0a0a0a;
+  border-radius:50%;width:20px;height:20px;font-size:12px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;line-height:20px;text-align:center;
+  box-shadow:0 2px 8px rgba(245,158,11,.4);}
+.cc{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:3px;}
+.cn{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;color:white;line-height:1.15;margin-bottom:8px;}
+.cp{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;color:var(--g);line-height:1;
+  text-shadow:0 0 16px rgba(46,170,110,.25);}
+.cu{font-size:11px;color:rgba(255,255,255,.3);margin-top:2px;}
+.cid{font-size:9px;color:rgba(255,255,255,.15);margin-top:6px;font-family:monospace;}
 
-  #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--g800);color:white;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;opacity:0;transition:all .3s;z-index:500;pointer-events:none;white-space:nowrap;}
-  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* PREVIEW PANEL */
+#pp{
+  display:none;position:fixed;bottom:0;left:0;right:0;
+  background:linear-gradient(0deg,#111 0%,rgba(17,17,17,.97) 100%);
+  border-top:2px solid rgba(245,158,11,.3);
+  padding:15px 18px;z-index:200;
+  box-shadow:0 -8px 40px rgba(0,0,0,.6);
+}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.pt{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;color:white;}
+.bcl2{
+  background:rgba(255,255,255,.08);border:1px solid var(--border2);
+  width:30px;height:30px;border-radius:8px;font-size:15px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);
+}
+.bcl2:hover{background:rgba(255,255,255,.15);}
+.pi{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;}
 
-  .es{text-align:center;padding:45px 20px;color:var(--g400);grid-column:1/-1;}
-  .es .em{font-size:38px;margin-bottom:8px;}
+/* WA CARD */
+#wc{
+  background:linear-gradient(145deg,#0f3d24,#1a6640,#2EAA6E);
+  border-radius:14px;padding:17px 20px;min-width:270px;flex:1;color:white;
+  position:relative;overflow:hidden;
+  border:1px solid rgba(245,158,11,.25);
+  box-shadow:0 8px 32px rgba(0,0,0,.5),0 4px 16px rgba(46,170,110,.15),inset 0 1px 0 rgba(255,255,255,.08);
+}
+#wc::after{
+  content:'';position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100'%3E%3Cpath d='M28 66L0 50V16L28 0l28 16v34L28 66z' fill='none' stroke='white' stroke-opacity='0.04' stroke-width='1'/%3E%3C/svg%3E");
+  pointer-events:none;
+}
+.wla{display:flex;align-items:center;gap:8px;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,.15);padding-bottom:9px;}
+.wlb{
+  background:rgba(255,255,255,.15);border:1px solid rgba(245,158,11,.4);
+  border-radius:7px;width:30px;height:30px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  box-shadow:0 2px 8px rgba(245,158,11,.2),inset 0 1px 0 rgba(255,255,255,.1);
+}
+.wlb span{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;color:white;letter-spacing:-.5px;}
+.wo{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;opacity:.75;}
+.wpr{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;line-height:1;margin-bottom:3px;}
+.wd{font-size:12px;opacity:.7;margin-bottom:10px;}
+.wrow{display:flex;align-items:baseline;gap:4px;}
+.wc2{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--gold);}
+.wpr2{font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:800;line-height:1;text-shadow:0 2px 10px rgba(0,0,0,.3);}
+.wu{font-size:11px;opacity:.55;margin-top:2px;}
+.wdate{font-size:10px;opacity:.4;margin-top:9px;border-top:1px solid rgba(255,255,255,.12);padding-top:7px;}
 
-  /* MULTI SELECT */
-  .pc.msel{border-color:var(--g);background:var(--gl);}
-  .pc.msel::after{content:'✓';position:absolute;top:8px;right:10px;background:var(--g);color:white;border-radius:50%;width:20px;height:20px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:20px;text-align:center;}
-  #multiBar{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--g800);padding:12px 18px;z-index:200;box-shadow:0 -4px 20px rgba(0,0,0,.2);}
-  #multiBar.show{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-  #multiCount{color:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;flex:1;}
-  .bmb{padding:9px 16px;border-radius:9px;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;white-space:nowrap;}
-  .bmb-img{background:var(--g);color:white;}
-  .bmb-img:hover{background:var(--gd);}
-  .bmb-txt{background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);}
-  .bmb-txt:hover{background:rgba(255,255,255,.25);}
-  .bmb-clr{background:transparent;color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2);font-size:12px;padding:7px 12px;}
+/* COPY TEXT */
+#ct{
+  background:rgba(255,255,255,.04);border:1px solid var(--border2);
+  border-radius:10px;padding:10px 13px;font-size:12px;color:rgba(255,255,255,.7);
+  flex:1;min-width:180px;line-height:1.7;white-space:pre-wrap;font-family:'Barlow',sans-serif;
+}
+.ab{display:flex;gap:8px;margin-top:10px;}
+.ba{
+  flex:1;padding:10px;border-radius:10px;border:none;
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;
+  cursor:pointer;transition:all .2s;
+}
+.bcp{background:rgba(245,158,11,.15);color:var(--gold);border:1px solid rgba(245,158,11,.3);}
+.bcp:hover{background:rgba(245,158,11,.25);}
+.bcp.copied{background:var(--gold);color:#0a0a0a;}
+.bss{background:var(--g);color:white;box-shadow:0 2px 10px rgba(46,170,110,.3);}
+.bss:hover{background:var(--gd);}
 
-  /* TARJETA MULTI (oculta, para captura) */
-  #multiCard{position:fixed;left:-9999px;top:0;background:var(--g);border-radius:16px;padding:22px 26px;width:380px;color:white;}
-  .mc-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,.2);padding-bottom:10px;}
-  .mc-org{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;opacity:.85;}
-  .mc-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;margin-bottom:10px;}
-  .mc-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.1);}
-  .mc-row:last-child{border-bottom:none;}
-  .mc-name{font-size:17px;font-weight:700;flex:1;margin-right:10px;line-height:1.3;}
-  .mc-price{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;white-space:nowrap;}
-  .mc-unit{font-size:12px;opacity:.65;text-align:right;margin-top:2px;}
-  .mc-date{font-size:11px;opacity:.5;margin-top:12px;border-top:1px solid rgba(255,255,255,.15);padding-top:8px;}
+/* MULTI BAR */
+#multiBar{
+  display:none;position:fixed;bottom:0;left:0;right:0;
+  background:linear-gradient(0deg,#0f0f0f,#141414);
+  padding:12px 18px;z-index:200;
+  border-top:1px solid rgba(245,158,11,.3);
+  box-shadow:0 -4px 20px rgba(0,0,0,.5);
+}
+#multiBar.show{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+#multiCount{color:var(--gold);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;flex:1;}
+.bmb{padding:9px 16px;border-radius:9px;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.bmb-img{background:var(--g);color:white;box-shadow:0 2px 10px rgba(46,170,110,.3);}
+.bmb-img:hover{background:var(--gd);}
+.bmb-txt{background:rgba(245,158,11,.15);color:var(--gold);border:1px solid rgba(245,158,11,.3);}
+.bmb-txt:hover{background:rgba(245,158,11,.25);}
+.bmb-clr{background:transparent;color:rgba(255,255,255,.4);border:1px solid var(--border2);font-size:12px;padding:7px 12px;}
 
-  /* FAB nuevo producto */
-  #fab{position:fixed;bottom:20px;right:20px;background:var(--g);color:white;border:none;border-radius:50%;width:52px;height:52px;font-size:24px;cursor:pointer;box-shadow:var(--shl);z-index:150;display:flex;align-items:center;justify-content:center;transition:all .2s;}
-  #fab:hover{background:var(--gd);transform:scale(1.08);}
-  /* Modo multi: bajar FAB */
-  body.multimode #fab{bottom:80px;}
+/* MULTI CARD */
+#multiCard{
+  position:fixed;left:-9999px;top:0;
+  background:linear-gradient(145deg,#0f3d24,#1a6640,#2EAA6E);
+  border-radius:16px;padding:22px 26px;width:380px;color:white;
+}
+.mc-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,.15);padding-bottom:10px;}
+.mc-org{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;opacity:.8;}
+.mc-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:19px;margin-bottom:10px;}
+.mc-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08);}
+.mc-row:last-child{border-bottom:none;}
+.mc-name{font-size:16px;font-weight:700;flex:1;margin-right:10px;line-height:1.3;}
+.mc-price-col{text-align:right;}
+.mc-price{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--gold);}
+.mc-unit{font-size:11px;opacity:.55;}
+.mc-date{font-size:10px;opacity:.4;margin-top:12px;border-top:1px solid rgba(255,255,255,.12);padding-top:8px;}
 
-  @media(max-width:580px){
-    #pg{grid-template-columns:1fr 1fr;}
-    .elh{display:none;}
-    .ei{grid-template-columns:1fr 75px auto;}
-    .ei input:nth-child(2),.ei input:nth-child(4){display:none;}
-    .pi{flex-direction:column;}
-    #wc{min-width:unset;width:100%;}
-    .ha .bh:nth-child(2){display:none;}
-  }
+/* MODAL */
+#prodModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;align-items:center;justify-content:center;padding:14px;}
+#prodModal.open{display:flex;}
+.mb{
+  background:linear-gradient(145deg,#1a1a1a,#141414);
+  border:1px solid var(--border2);
+  border-radius:18px;padding:24px;width:100%;max-width:440px;
+  box-shadow:0 24px 60px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.05);
+}
+.mb h2{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:white;margin-bottom:16px;}
+.fg{margin-bottom:12px;}
+.fg label{display:block;font-size:10px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.fg input,.fg select{
+  width:100%;padding:10px 12px;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--border2);border-radius:9px;
+  font-size:15px;font-family:'Barlow',sans-serif;outline:none;
+  color:white;transition:border-color .2s;
+}
+.fg input:focus,.fg select:focus{border-color:var(--gold);}
+.fg select option{background:#1a1a1a;color:white;}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.sdiv{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin:12px 0 8px;padding-bottom:4px;border-bottom:1px solid rgba(245,158,11,.2);}
+.ma{display:flex;gap:9px;margin-top:16px;}
+.bcn{flex:1;padding:10px;border:1px solid var(--border2);border-radius:9px;background:transparent;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;cursor:pointer;color:rgba(255,255,255,.5);}
+.bcn:hover{border-color:rgba(255,255,255,.3);color:white;}
+.bsv{flex:2;padding:10px;border:none;border-radius:9px;background:var(--g);color:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 2px 10px rgba(46,170,110,.3);}
+.bsv:hover{background:var(--gd);}
+.bdel{padding:10px 14px;border:none;border-radius:9px;background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;cursor:pointer;}
+.bdel:hover{background:rgba(239,68,68,.25);}
+
+/* EDIT VIEW */
+.elh{display:grid;grid-template-columns:1fr 130px 85px 60px auto;gap:5px;padding:0 11px;margin-bottom:3px;}
+.elh span{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.25);}
+.ei{display:grid;grid-template-columns:1fr 130px 85px 60px auto;gap:5px;align-items:center;
+  background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:7px 11px;margin-bottom:5px;}
+.ei input{padding:5px 7px;border:1px solid var(--border2);border-radius:6px;font-size:12px;font-family:'Barlow',sans-serif;outline:none;width:100%;color:white;background:rgba(255,255,255,.05);}
+.ei input:focus{border-color:var(--gold);}
+.bde{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.2);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;}
+.bde:hover{background:rgba(239,68,68,.3);}
+.bap{background:rgba(245,158,11,.08);border:1px dashed rgba(245,158,11,.3);border-radius:10px;padding:10px;width:100%;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:var(--gold);cursor:pointer;transition:all .2s;margin-top:3px;}
+.bap:hover{background:rgba(245,158,11,.15);}
+.bsl{background:var(--g);color:white;border:none;border-radius:11px;padding:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;cursor:pointer;margin-top:10px;width:100%;box-shadow:0 2px 10px rgba(46,170,110,.3);}
+.bsl:hover{background:var(--gd);}
+
+/* FAB */
+#fab{
+  position:fixed;bottom:20px;right:20px;
+  background:var(--g);color:white;border:none;border-radius:50%;
+  width:52px;height:52px;font-size:24px;cursor:pointer;
+  box-shadow:0 4px 20px rgba(46,170,110,.4);z-index:150;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;
+}
+#fab:hover{background:var(--gd);transform:scale(1.08);}
+body.multimode #fab{bottom:80px;}
+
+/* TOAST */
+#toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--bg4);color:white;
+  border:1px solid var(--border2);
+  padding:9px 18px;border-radius:9px;font-size:12px;font-weight:600;
+  opacity:0;transition:all .3s;z-index:400;pointer-events:none;white-space:nowrap;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* EMPTY */
+.es{text-align:center;padding:50px 20px;color:rgba(255,255,255,.2);grid-column:1/-1;}
+.es .em{font-size:40px;margin-bottom:10px;}
+
+@media(max-width:600px){
+  #pg{grid-template-columns:1fr 1fr;}
+  .elh{display:none;}
+  .ei{grid-template-columns:1fr 75px auto;}
+  .ei input:nth-child(2),.ei input:nth-child(4){display:none;}
+  .pi{flex-direction:column;}
+  #wc{min-width:unset;width:100%;}
+}
 </style>
 </head>
 <body>
+<div class="hc-bg"></div>
 
 <header>
-  <div style="background:rgba(255,255,255,0.18);border-radius:8px;width:46px;height:46px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-    <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:white;letter-spacing:-1px;">AFA</span>
-  </div>
-  <div class="ht">
+  <div class="afa-badge"><span>AFA</span></div>
+  <div class="htxt">
     <h1>GESTOR DE PRECIOS</h1>
     <p>Agricultores Federados Argentinos</p>
   </div>
-  <div class="ha">
-    <button class="bh active" id="btnVer" onclick="showView('ver')">Ver Precios</button>
-    <button class="bh sync" onclick="syncGmail()">📧 Sincronizar Gmail</button>
-    <button class="bh" id="btnEd" onclick="showView('editar')">Editar lista</button>
-    <a href="gestion.html" class="bh" style="text-decoration:none;">⚙️ Gestión</a>
+  <div class="hnav">
+    <button class="hn active" id="btnVer" onclick="showView('ver')">Ver Precios</button>
+    <button class="hn sync" onclick="syncGmail()">📧 Sincronizar</button>
+    <button class="hn" id="btnEd" onclick="showView('editar')">Editar lista</button>
+    <a href="gestion.html" class="hn back">⚙️ Gestión</a>
   </div>
 </header>
 
@@ -176,7 +347,10 @@
   <!-- VER -->
   <div id="vVer">
     <div id="syncBanner" class="hidden"></div>
-    <div class="sw"><span class="si">🔍</span><input id="si" type="text" placeholder="Buscar... ej: urea, glifosato, silo bolsa" oninput="rg()"></div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input id="si" type="text" placeholder="Buscar... ej: urea, glifosato, silo bolsa" oninput="rg()">
+    </div>
     <div class="cfs" id="cfs"></div>
     <div class="rc" id="rc"></div>
     <div id="pg"></div>
@@ -184,21 +358,21 @@
 
   <!-- EDITAR -->
   <div id="vEd" style="display:none">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;margin-bottom:14px;">
       <div>
-        <h2 style="font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;">Lista de Productos</h2>
-        <p style="font-size:11px;color:var(--g400);margin-top:2px;">Hacé clic en cualquier campo para editar. Guardá al terminar.</p>
+        <h2 style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:white;">Lista de Productos</h2>
+        <p style="font-size:11px;color:rgba(255,255,255,.3);margin-top:2px;">Editá precios manualmente. Los IDs se usan para sincronización automática.</p>
       </div>
-      <button class="bap" style="width:auto;margin:0;padding:7px 16px;" onclick="openNewProd()">+ Nuevo producto</button>
+      <button class="bap" style="width:auto;margin:0;padding:8px 18px;" onclick="openNewProd()">+ Agregar</button>
     </div>
     <div class="elh"><span>Producto</span><span>Categoría</span><span>Precio USD</span><span>Unidad</span><span></span></div>
     <div id="elg"></div>
-    <button class="bap" onclick="openNewProd()">+ Nuevo producto</button>
+    <button class="bap" onclick="openNewProd()">+ Agregar producto</button>
     <button class="bsl" onclick="saveL()">✓ Guardar cambios</button>
   </div>
 </main>
 
-<!-- PREVIEW PANEL -->
+<!-- PREVIEW -->
 <div id="pp">
   <div class="ph">
     <div class="pt" id="ptt">Vista previa</div>
@@ -207,9 +381,7 @@
   <div class="pi">
     <div id="wc">
       <div class="wla">
-        <div style="background:rgba(255,255,255,0.18);border-radius:6px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:white;letter-spacing:-0.5px;">AFA</span>
-        </div>
+        <div class="wlb"><span>AFA</span></div>
         <span class="wo">Agricultores Federados Argentinos</span>
       </div>
       <div class="wpr" id="wpr">PRODUCTO</div>
@@ -228,7 +400,7 @@
   </div>
 </div>
 
-<!-- MODAL NUEVO / EDITAR PRODUCTO -->
+<!-- MODAL -->
 <div id="prodModal">
   <div class="mb">
     <h2 id="modalTitle">Nuevo Producto</h2>
@@ -236,33 +408,23 @@
     <div class="fg"><label>Nombre del producto</label><input id="mName" placeholder="Ej: Glifosato 66,2%"></div>
     <div class="fg"><label>Categoría</label>
       <select id="mCat">
-        <option>Herbicidas</option>
-        <option>Fertilizantes</option>
-        <option>Insecticidas</option>
-        <option>Fungicidas</option>
-        <option>Aceites/Coadyuvantes</option>
-        <option>Inoculantes</option>
-        <option>Silos Bolsa</option>
-        <option>Semillas</option>
-        <option>Otros</option>
+        <option>Herbicidas</option><option>Fertilizantes</option><option>Insecticidas</option>
+        <option>Fungicidas</option><option>Aceites/Coadyuvantes</option><option>Inoculantes</option>
+        <option>Silos Bolsa</option><option>Semillas</option><option>Otros</option>
       </select>
     </div>
     <div class="fg"><label>Precio (USD)</label><input id="mPrice" type="number" step="0.0001" placeholder="0.0000"></div>
     <div class="fg"><label>Unidad</label>
       <select id="mUnit">
-        <option value="LTS">LTS (litros)</option>
-        <option value="KGS">KGS (kilogramos)</option>
-        <option value="UND">UND (unidad)</option>
-        <option value="BOT">BOT (botella)</option>
-        <option value="VEJ">VEJ</option>
-        <option value="S35">S35 (sobre 350g)</option>
-        <option value="S15">S15 (sobre 150g)</option>
-        <option value="S05">S05 (sobre 50g)</option>
+        <option value="LTS">LTS (litros)</option><option value="KGS">KGS (kilogramos)</option>
+        <option value="UND">UND (unidad)</option><option value="BOT">BOT (botella)</option>
+        <option value="VEJ">VEJ</option><option value="S35">S35</option>
+        <option value="S15">S15</option><option value="S05">S05</option>
       </select>
     </div>
-    <div class="fg"><label>ID Artículo AFA (opcional, para sync automático)</label><input id="mArtId" placeholder="000000000000012345" maxlength="18"></div>
+    <div class="fg"><label>ID Artículo AFA (para sync automático)</label><input id="mArtId" placeholder="000000000000012345" maxlength="18"></div>
     <div class="fg" id="fg20b" style="display:none">
-      <label>Precio bidón 20L (se divide por 20 automáticamente)</label>
+      <label>Precio bidón 20L (÷20 automático)</label>
       <input id="m20b" type="number" step="0.0001" placeholder="Precio del bidón completo">
     </div>
     <div class="ma">
@@ -276,7 +438,7 @@
 <!-- FAB -->
 <button id="fab" onclick="openNewProd()" title="Nuevo producto">+</button>
 
-<!-- MULTI SELECT BAR -->
+<!-- MULTI BAR -->
 <div id="multiBar">
   <span id="multiCount">0 seleccionados</span>
   <button class="bmb bmb-clr" onclick="clearMulti()">✕ Limpiar</button>
@@ -284,11 +446,11 @@
   <button class="bmb bmb-img" onclick="downloadMultiCard()">📸 Guardar imagen</button>
 </div>
 
-<!-- TARJETA MULTI (oculta, usada para captura) -->
+<!-- MULTI CARD OCULTA -->
 <div id="multiCard">
   <div class="mc-header">
-    <div style="background:rgba(255,255,255,0.18);border-radius:6px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;color:white;letter-spacing:-0.5px;">AFA</span>
+    <div class="wlb" style="width:28px;height:28px;background:rgba(255,255,255,.15);border:1px solid rgba(245,158,11,.4);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;color:white;">AFA</span>
     </div>
     <span class="mc-org">Agricultores Federados Argentinos</span>
   </div>
@@ -300,150 +462,48 @@
 <div id="toast"></div>
 
 <script>
-// ── DATOS ──
-const DP=[
-  {id:"000000000000049352",name:"MSO Fideplus",cat:"Aceites/Coadyuvantes",price:14.0,unit:"LTS"},
-  {id:"000000000000059838",name:"Silicona x 1 Lt",cat:"Aceites/Coadyuvantes",price:36.25,unit:"LTS"},
-  {id:"000000000000065564",name:"Aceite Metilado",cat:"Aceites/Coadyuvantes",price:2.7,unit:"LTS"},
-  {id:"000000000000004887",name:"Solmix (80-20)",cat:"Fertilizantes",price:0.6916,unit:"KGS"},
-  {id:"000000000000035181",name:"Sulfato de Amonio 42%",cat:"Fertilizantes",price:1.45,unit:"LTS"},
-  {id:"000000000000004951",name:"SPS Granel",cat:"Fertilizantes",price:0.4412,unit:"KGS"},
-  {id:"000000000000004953",name:"SPT Granel",cat:"Fertilizantes",price:0.8624,unit:"KGS"},
-  {id:"000000000000004955",name:"Urea Granulada Granel",cat:"Fertilizantes",price:0.9488,unit:"KGS"},
-  {id:"000000000000004966",name:"Sulfato Calcio Escamado Big Bag",cat:"Fertilizantes",price:0.1617,unit:"KGS"},
-  {id:"000000000000004972",name:"Sulfato Calcio Pelletizado Big Bag",cat:"Fertilizantes",price:0.2365,unit:"KGS"},
-  {id:"000000000000041087",name:"Mezcla Química NPS Granel",cat:"Fertilizantes",price:0.9596,unit:"KGS"},
-  {id:"000000000000051234",name:"12-40-0-5-1 Mezcla Química Granel",cat:"Fertilizantes",price:1.073,unit:"KGS"},
-  {id:"000000000000059244",name:"Top Phos 724 Big Bag x 1000 kgs",cat:"Fertilizantes",price:1.166,unit:"KGS"},
-  {id:"000000000000078176",name:"Foszinc 45 Granel (12-45-0-5S-1Zn)",cat:"Fertilizantes",price:1.0676,unit:"KGS"},
-  {id:"000000000000066479",name:"Cletodim 24%",cat:"Herbicidas",price:7.5004,unit:"LTS"},
-  {id:"000000000000005320",name:"Heat 70% x 350 Grs",cat:"Herbicidas",price:111.65,unit:"S35"},
-  {id:"000000000000005357",name:"Convey 33,6% x 1 Lt",cat:"Herbicidas",price:363.0,unit:"LTS"},
-  {id:"000000000000005362",name:"Finesse x 150 Grs",cat:"Herbicidas",price:39.6,unit:"S15"},
-  {id:"000000000000005388",name:"Tocon x 1 Lt",cat:"Herbicidas",price:105.6,unit:"LTS"},
-  {id:"000000000000005426",name:"Nisshin SC 4%",cat:"Herbicidas",price:12.65,unit:"LTS"},
-  {id:"000000000000035182",name:"Glifosato 66,2%",cat:"Herbicidas",price:5.0103,unit:"LTS",raw20b:100.2064},
-  {id:"000000000000039556",name:"Atrazina 50%",cat:"Herbicidas",price:3.41,unit:"LTS"},
-  {id:"000000000000043650",name:"Flurocloridona Rainbow",cat:"Herbicidas",price:16.5,unit:"LTS"},
-  {id:"000000000000044016",name:"Sulfentrazone 50%",cat:"Herbicidas",price:18.53,unit:"LTS"},
-  {id:"000000000000046327",name:"Imazetapir 10%",cat:"Herbicidas",price:5.44,unit:"LTS"},
-  {id:"000000000000051565",name:"Metsulfuron 60 x 50 Grs",cat:"Herbicidas",price:2.05,unit:"S05"},
-  {id:"000000000000052689",name:"Cletodim 24% (alt)",cat:"Herbicidas",price:7.5004,unit:"LTS"},
-  {id:"000000000000053533",name:"Paraquat 27,6%",cat:"Herbicidas",price:3.4503,unit:"LTS"},
-  {id:"000000000000055412",name:"S-Metolaclor",cat:"Herbicidas",price:6.6,unit:"LTS"},
-  {id:"000000000000055621",name:"Dicamba",cat:"Herbicidas",price:9.6,unit:"LTS"},
-  {id:"000000000000055751",name:"Mayoral",cat:"Herbicidas",price:36.3,unit:"LTS"},
-  {id:"000000000000056896",name:"2,4D Cleaspray EHE",cat:"Herbicidas",price:4.9003,unit:"LTS"},
-  {id:"000000000000058001",name:"2,4D EHE",cat:"Herbicidas",price:4.9003,unit:"LTS"},
-  {id:"000000000000059199",name:"Atrazina 90",cat:"Herbicidas",price:5.7003,unit:"KGS"},
-  {id:"000000000000060144",name:"Dicamba 57,8%",cat:"Herbicidas",price:7.7,unit:"LTS"},
-  {id:"000000000000062138",name:"Picloram 24%",cat:"Herbicidas",price:7.7,unit:"LTS"},
-  {id:"000000000000064326",name:"Poptryn x 20 Lts",cat:"Herbicidas",price:7.59,unit:"LTS"},
-  {id:"000000000000069503",name:"Haloxifop 54%",cat:"Herbicidas",price:19.91,unit:"LTS"},
-  {id:"000000000000070496",name:"Mesoflex (Mesotrione 48%)",cat:"Herbicidas",price:38.5,unit:"LTS"},
-  {id:"000000000000072135",name:"2,4D Empiric Fusion",cat:"Herbicidas",price:4.95,unit:"LTS"},
-  {id:"000000000000075640",name:"Flumioxazin",cat:"Herbicidas",price:18.1715,unit:"LTS"},
-  {id:"000000000000076785",name:"Terbutilazina",cat:"Herbicidas",price:6.38,unit:"LTS"},
-  {id:"000000000000078349",name:"2,4D Deferon Hexil x 20 Lts",cat:"Herbicidas",price:5.06,unit:"LTS"},
-  {id:"000000000000078722",name:"Fidemax 2.4D ME 30%",cat:"Herbicidas",price:3.64,unit:"LTS",raw20b:72.8},
-  {id:"000000000000079231",name:"Inoculante Soja",cat:"Inoculantes",price:30.0014,unit:"VEJ"},
-  {id:"000000000000005127",name:"Maxim XL x 1 Lt",cat:"Fungicidas",price:49.5,unit:"LTS"},
-  {id:"000000000000048081",name:"Azoxi 20%-Cipro 8%",cat:"Fungicidas",price:13.5908,unit:"LTS"},
-  {id:"000000000000073867",name:"Curasemillas Difimet",cat:"Fungicidas",price:17.8002,unit:"LTS"},
-  {id:"000000000000076587",name:"Cronos XL x 1 Lt",cat:"Fungicidas",price:49.5,unit:"LTS"},
-  {id:"000000000000039044",name:"Lambdacialotrina 5%",cat:"Insecticidas",price:6.9901,unit:"LTS"},
-  {id:"000000000000044804",name:"Imida 20%-Lambda 10%",cat:"Insecticidas",price:15.4,unit:"LTS"},
-  {id:"000000000000053593",name:"Bifentrin 10%",cat:"Insecticidas",price:7.1903,unit:"LTS"},
-  {id:"000000000000056016",name:"Imidacloprid 60%",cat:"Insecticidas",price:18.7,unit:"LTS"},
-  {id:"000000000000058794",name:"Imidacloprid 35%",cat:"Insecticidas",price:13.7304,unit:"LTS"},
-  {id:"000000000000066501",name:"Extra Tackle Polvo x 30 Kg",cat:"Insecticidas",price:308.448,unit:"UND"},
-  {id:"000000000000070880",name:"Tuckson x 20 Lts",cat:"Insecticidas",price:35.805,unit:"LTS"},
-  {id:"000000000000073251",name:"Fidemax Delta BPO x 20 Lts",cat:"Insecticidas",price:17.4003,unit:"LTS"},
-  {id:"000000000000078413",name:"Transform x 2 kg",cat:"Insecticidas",price:490.6,unit:"BOT"},
-  {id:"000000000000079228",name:"Clorantra 20%",cat:"Insecticidas",price:48.0018,unit:"LTS"},
-  {id:"000000000000079914",name:"Lambda 25% Largin CS x Lt",cat:"Insecticidas",price:16.72,unit:"LTS"},
-  {id:"000000000000080261",name:"Lambda 25% Aikido 25 x 1 Lt",cat:"Insecticidas",price:16.72,unit:"LTS"},
-  {id:"000000000000080331",name:"Aranya 3.6 x 5 Lts",cat:"Insecticidas",price:13.44,unit:"LTS"},
-  {id:"000000000000005027",name:"Silo Bolsa Ipesa 9x60 Ref",cat:"Silos Bolsa",price:280.5,unit:"UND"},
-  {id:"000000000000005028",name:"Silo Bolsa Ipesa 9x75 Ref",cat:"Silos Bolsa",price:341.0,unit:"UND"},
-  {id:"000000000000005032",name:"Silo Bolsa Ipesa 9x100 Ref",cat:"Silos Bolsa",price:462.0,unit:"UND"},
-  {id:"000000000000080087",name:"SILOX 9x60 Ref",cat:"Silos Bolsa",price:269.5,unit:"UND"},
-];
-
-// ── SUPABASE CONFIG ──
+// ── SUPABASE ──
 const SB_URL='https://hgyfukcdfimlubdhxgue.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhneWZ1a2NkZmltbHViZGh4Z3VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwODMwOTIsImV4cCI6MjA4NDY1OTA5Mn0.RUspv9-KTJMpQ6Uc8QOE8MQK-p_B1NJC77lBzJny8TQ';
-
 async function sbFetch(path,opts={}){
   const r=await fetch(SB_URL+path,{
     headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation',...(opts.headers||{})},
     ...opts
   });
-  if(!r.ok) throw new Error(await r.text());
-  const t=await r.text();
-  return t?JSON.parse(t):[];
+  const t=await r.text();return t?JSON.parse(t):[];
 }
 
-let prods=[];
-let sel=null,actCat='Todos',nid=9000001;
-let lastSync=localStorage.getItem('afa4_lastsync')||null;
+// ── STATE ──
+let prods=[],sel=null,actCat='Todos',nid=9000001,lastSync=localStorage.getItem('afa_lastsync')||null;
 let multiSel=new Set();
 
 const fmt=n=>Number(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:4});
 const today=()=>new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
-function toast(m,dur=2400){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),dur);}
+function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2400);}
 
-// ── CARGAR DESDE SUPABASE ──
+// ── LOAD ──
 async function loadProds(){
   try{
     const data=await sbFetch('/rest/v1/afa_precios?select=*&order=cat,name');
-    if(data.length>0){
-      prods=data;
-    } else {
-      // Primera vez: cargar datos por defecto
-      prods=DP;
-      await saveAllToSB();
-    }
-  } catch(e){
-    console.error('Supabase error:',e);
-    prods=DP;
-    toast('⚠️ Sin conexión — usando datos locales');
-  }
+    if(data&&data.length>0){prods=data;}
+    else{prods=[];toast('⚠️ Sin productos cargados');}
+  }catch(e){prods=[];toast('⚠️ Sin conexión');}
   rcats();rg();
 }
 
-// ── GUARDAR UN PRODUCTO EN SUPABASE (PATCH = update) ──
 async function sv(p){
   try{
-    await sbFetch(`/rest/v1/afa_precios?id=eq.${p.id}`,{
-      method:'PATCH',
-      body:JSON.stringify({name:p.name,cat:p.cat,price:p.price,unit:p.unit,raw20b:p.raw20b||null,updated_at:new Date().toISOString()})
-    });
-  } catch(e){ console.error('Error guardando:',e); }
+    await sbFetch(`/rest/v1/afa_precios?id=eq.${p.id}`,{method:'PATCH',
+      body:JSON.stringify({name:p.name,cat:p.cat,price:p.price,unit:p.unit,raw20b:p.raw20b||null,updated_at:new Date().toISOString()})});
+  }catch(e){console.error(e);}
 }
-
-// ── GUARDAR TODOS (primera vez) ──
-async function saveAllToSB(){
-  try{
-    await sbFetch('/rest/v1/afa_precios',{
-      method:'POST',
-      headers:{'Prefer':'resolution=merge-duplicates'},
-      body:JSON.stringify(DP.map(p=>({...p,raw20b:p.raw20b||null,updated_at:new Date().toISOString()})))
-    });
-  } catch(e){ console.error('Error carga inicial:',e); }
-}
-
-// ── ELIMINAR PRODUCTO ──
 async function sbDelete(id){
-  try{
-    await sbFetch(`/rest/v1/afa_precios?id=eq.${id}`,{method:'DELETE'});
-  } catch(e){ console.error('Error eliminando:',e); }
+  try{await sbFetch(`/rest/v1/afa_precios?id=eq.${id}`,{method:'DELETE'});}catch(e){}
 }
 
-// ── SYNC GMAIL ──
 function syncGmail(){
   const b=document.getElementById('syncBanner');
-  b.innerHTML='📧 <strong>Para sincronizar:</strong> escribile a Claude en el chat: <em>"sincronizar precios desde Gmail"</em> y actualizará automáticamente.';
+  b.innerHTML='📧 <strong>Para sincronizar:</strong> escribile a Claude: <em>"sincronizar precios desde Gmail"</em>';
   b.classList.remove('hidden');
   setTimeout(()=>b.classList.add('hidden'),6000);
 }
@@ -475,7 +535,7 @@ function rg(){
   document.getElementById('rc').textContent=(q||actCat!=='Todos')?`${f.length} resultado${f.length!==1?'s':''}`:`${prods.length} productos · ${lastSync?'Última sync: '+lastSync:'Sin sync aún'}`;
   const g=document.getElementById('pg');
   if(!f.length){g.innerHTML=`<div class="es"><div class="em">🌱</div><p>Sin resultados para "<strong>${q}</strong>"</p></div>`;return;}
-  g.innerHTML=f.map(p=>`<div class="pc ${sel?.id===p.id?'sel':''} ${multiSel.has(p.id)?'msel':''}" 
+  g.innerHTML=f.map(p=>`<div class="pc ${sel?.id===p.id?'sel':''} ${multiSel.has(p.id)?'msel':''}"
     id="pc_${p.id}"
     onclick="handleCardClick('${p.id}')"
     ondblclick="toggleMulti('${p.id}')"
@@ -489,107 +549,63 @@ function rg(){
   </div>`).join('');
 }
 
-// ── LONG PRESS para activar multi-select ──
+// ── LONG PRESS ──
 let longTimer=null;
-function startLong(id){
-  longTimer=setTimeout(()=>{
-    longTimer=null;
-    toggleMulti(id);
-  },500);
-}
-function endLong(){
-  if(longTimer){clearTimeout(longTimer);longTimer=null;}
-}
+function startLong(id){longTimer=setTimeout(()=>{longTimer=null;toggleMulti(id);},500);}
+function endLong(){if(longTimer){clearTimeout(longTimer);longTimer=null;}}
 function handleCardClick(id){
-  if(longTimer===null && multiSel.size===0){
-    // modo normal: preview
-    selP(id);
-  } else if(multiSel.size>0){
-    // ya en modo multi: toggle
-    toggleMulti(id);
-  }
-  // si longTimer != null, el long press lo maneja
+  if(longTimer===null&&multiSel.size===0)selP(id);
+  else if(multiSel.size>0)toggleMulti(id);
 }
 function toggleMulti(id){
   closePrev();
-  if(multiSel.has(id)) multiSel.delete(id);
-  else multiSel.add(id);
-  updateMultiBar();
-  rg();
+  if(multiSel.has(id))multiSel.delete(id);else multiSel.add(id);
+  updateMultiBar();rg();
 }
 function updateMultiBar(){
   const bar=document.getElementById('multiBar');
   const n=multiSel.size;
-  if(n>0){
-    bar.classList.add('show');
-    document.getElementById('multiCount').textContent=`${n} producto${n!==1?'s':''} seleccionado${n!==1?'s':''}`;
-    document.body.classList.add('multimode');
-  } else {
-    bar.classList.remove('show');
-    document.body.classList.remove('multimode');
-  }
+  if(n>0){bar.classList.add('show');document.getElementById('multiCount').textContent=`${n} producto${n!==1?'s':''} seleccionado${n!==1?'s':''}`;document.body.classList.add('multimode');}
+  else{bar.classList.remove('show');document.body.classList.remove('multimode');}
 }
 function clearMulti(){multiSel.clear();updateMultiBar();rg();}
-
-function getMultiProds(){return [...multiSel].map(id=>prods.find(p=>p.id===id)).filter(Boolean);}
+function getMultiProds(){return[...multiSel].map(id=>prods.find(p=>p.id===id)).filter(Boolean);}
 
 function copyMultiText(){
-  const ps=getMultiProds();
-  if(!ps.length)return;
+  const ps=getMultiProds();if(!ps.length)return;
   const lines=ps.map(p=>`📦 *${p.name}* — USD ${fmt(p.price)} / ${p.unit}`).join('\n');
   const txt=`━━━━━━━━━━━━━━━━━━━━\n🌾 *AFA — Agricultores Federados Argentinos*\n━━━━━━━━━━━━━━━━━━━━\n${lines}\n📅 Precios al ${today()}\n━━━━━━━━━━━━━━━━━━━━`;
   navigator.clipboard.writeText(txt).then(()=>toast(`✓ ${ps.length} precios copiados`));
 }
 
 function downloadMultiCard(){
-  const ps=getMultiProds();
-  if(!ps.length)return;
-  // Construir tarjeta oculta
+  const ps=getMultiProds();if(!ps.length)return;
   document.getElementById('mcRows').innerHTML=ps.map(p=>`
     <div class="mc-row">
-      <div>
-        <div class="mc-name">${p.name}</div>
-        <div class="mc-unit">por ${p.unit}</div>
-      </div>
-      <div class="mc-price">USD ${fmt(p.price)}</div>
+      <div><div class="mc-name">${p.name}</div><div class="mc-unit">por ${p.unit}</div></div>
+      <div class="mc-price-col"><div class="mc-price">USD ${fmt(p.price)}</div></div>
     </div>`).join('');
   document.getElementById('mcDate').textContent=`📅 Precios actualizados al ${today()}`;
   const card=document.getElementById('multiCard');
-  // Mover a posición visible para captura
-  card.style.left='0px';
-  card.style.top='0px';
-  card.style.position='absolute';
-  card.style.zIndex='-1';
-  const btn=document.querySelector('.bmb-img');
-  btn.textContent='⏳ Generando...';
-  btn.disabled=true;
+  card.style.left='0px';card.style.top='0px';card.style.position='absolute';card.style.zIndex='-1';
+  const btn=document.querySelector('.bmb-img');btn.textContent='⏳ Generando...';btn.disabled=true;
   setTimeout(()=>{
-    html2canvas(card,{scale:3,backgroundColor:'#2EAA6E',useCORS:true,logging:false}).then(canvas=>{
-      card.style.left='-9999px';
-      card.style.position='fixed';
+    html2canvas(card,{scale:3,backgroundColor:'#1a6640',useCORS:true,logging:false}).then(canvas=>{
+      card.style.left='-9999px';card.style.position='fixed';
       canvas.toBlob(blob=>{
         const file=new File([blob],'precios-afa.png',{type:'image/png'});
-        if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-          navigator.share({files:[file],title:'Precios AFA'})
-            .catch(()=>fallbackDownloadMulti(canvas))
-            .finally(()=>{btn.textContent='📸 Guardar imagen';btn.disabled=false;});
-        } else {
-          fallbackDownloadMulti(canvas);
-          btn.textContent='📸 Guardar imagen';btn.disabled=false;
-        }
+        if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]}))
+          navigator.share({files:[file],title:'Precios AFA'}).catch(()=>dlMulti(canvas)).finally(()=>{btn.textContent='📸 Guardar imagen';btn.disabled=false;});
+        else{dlMulti(canvas);btn.textContent='📸 Guardar imagen';btn.disabled=false;}
       },'image/png');
     });
   },100);
 }
-function fallbackDownloadMulti(canvas){
-  const a=document.createElement('a');
-  a.download=`precios-afa-${today().replace(/\//g,'-')}.png`;
-  a.href=canvas.toDataURL('image/png');
-  a.click();
-  toast('✓ Imagen guardada — compartila desde tu galería');
+function dlMulti(canvas){
+  const a=document.createElement('a');a.download=`precios-afa-${today().replace(/\//g,'-')}.png`;a.href=canvas.toDataURL('image/png');a.click();toast('✓ Imagen guardada');
 }
 
-// ── SELECT PRODUCTO ──
+// ── SELECT ──
 function selP(id){
   sel=prods.find(p=>p.id===id);if(!sel)return;
   rg();
@@ -612,6 +628,7 @@ function selP(id){
 }
 
 function closePrev(){document.getElementById('pp').style.display='none';sel=null;rg();}
+
 function cpTxt(){
   navigator.clipboard.writeText(document.getElementById('ct').textContent).then(()=>{
     const b=document.getElementById('bcp');b.textContent='✓ Copiado!';b.classList.add('copied');
@@ -619,79 +636,55 @@ function cpTxt(){
     setTimeout(()=>{b.textContent='📋 Copiar texto';b.classList.remove('copied');},2500);
   });
 }
+
 function downloadCard(){
   const btn=document.getElementById('btnImg');
-  btn.textContent='⏳ Generando...';
-  btn.disabled=true;
+  btn.textContent='⏳ Generando...';btn.disabled=true;
   const card=document.getElementById('wc');
-  html2canvas(card,{
-    scale:3,
-    backgroundColor:null,
-    useCORS:true,
-    logging:false
-  }).then(canvas=>{
-    // Intentar compartir nativo (móvil)
+  html2canvas(card,{scale:3,backgroundColor:null,useCORS:true,logging:false}).then(canvas=>{
     canvas.toBlob(blob=>{
       const file=new File([blob],'precio-afa.png',{type:'image/png'});
-      if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]}))
         navigator.share({files:[file],title:'Precio AFA'})
           .then(()=>{btn.textContent='📸 Guardar imagen';btn.disabled=false;})
-          .catch(()=>fallbackDownload(canvas,btn));
-      } else {
-        fallbackDownload(canvas,btn);
-      }
+          .catch(()=>fallbackDl(canvas,btn));
+      else fallbackDl(canvas,btn);
     },'image/png');
-  }).catch(()=>{
-    btn.textContent='📸 Guardar imagen';
-    btn.disabled=false;
-    toast('Error al generar la imagen');
-  });
+  }).catch(()=>{btn.textContent='📸 Guardar imagen';btn.disabled=false;toast('Error al generar imagen');});
 }
-
-function fallbackDownload(canvas,btn){
+function fallbackDl(canvas,btn){
   const a=document.createElement('a');
   a.download=`precio-afa-${sel?.name?.replace(/\s+/g,'-').toLowerCase()||'producto'}.png`;
-  a.href=canvas.toDataURL('image/png');
-  a.click();
-  btn.textContent='✓ Imagen descargada';
-  btn.style.background='#1d7a4e';
+  a.href=canvas.toDataURL('image/png');a.click();
+  btn.textContent='✓ Descargado';btn.style.background='var(--gd)';
   toast('✓ Imagen guardada — compartila desde tu galería');
   setTimeout(()=>{btn.textContent='📸 Guardar imagen';btn.style.background='';btn.disabled=false;},2500);
 }
 
-// ── MODAL NUEVO / EDITAR ──
+// ── MODAL ──
 let editingId=null;
 function openNewProd(){
   editingId=null;
   document.getElementById('modalTitle').textContent='Nuevo Producto';
-  document.getElementById('mId').value='';
-  document.getElementById('mName').value='';
-  document.getElementById('mCat').value='Herbicidas';
-  document.getElementById('mPrice').value='';
-  document.getElementById('mUnit').value='LTS';
-  document.getElementById('mArtId').value='';
-  document.getElementById('m20b').value='';
-  document.getElementById('fg20b').style.display='none';
+  document.getElementById('mId').value='';document.getElementById('mName').value='';
+  document.getElementById('mCat').value='Herbicidas';document.getElementById('mPrice').value='';
+  document.getElementById('mUnit').value='LTS';document.getElementById('mArtId').value='';
+  document.getElementById('m20b').value='';document.getElementById('fg20b').style.display='none';
   document.getElementById('btnDel').style.display='none';
   document.getElementById('prodModal').classList.add('open');
   setTimeout(()=>document.getElementById('mName').focus(),100);
 }
-
 function openEditProd(id){
   const p=prods.find(x=>x.id===id);if(!p)return;
   editingId=id;
   document.getElementById('modalTitle').textContent='Editar Producto';
-  document.getElementById('mName').value=p.name;
-  document.getElementById('mCat').value=p.cat;
-  document.getElementById('mPrice').value=p.price;
-  document.getElementById('mUnit').value=p.unit;
-  document.getElementById('mArtId').value=p.id||'';
-  document.getElementById('m20b').value=p.raw20b||'';
+  document.getElementById('mName').value=p.name;document.getElementById('mCat').value=p.cat;
+  document.getElementById('mPrice').value=p.price;document.getElementById('mUnit').value=p.unit;
+  document.getElementById('mArtId').value=p.id||'';document.getElementById('m20b').value=p.raw20b||'';
   document.getElementById('fg20b').style.display=p.raw20b?'block':'none';
   document.getElementById('btnDel').style.display='block';
   document.getElementById('prodModal').classList.add('open');
 }
-
 function closeModal(){document.getElementById('prodModal').classList.remove('open');}
 
 async function saveProd(){
@@ -701,20 +694,16 @@ async function saveProd(){
   if(isNaN(price)){toast('Ingresá un precio válido');return;}
   const artId=document.getElementById('mArtId').value.trim().padStart(18,'0')||String(nid++).padStart(18,'0');
   const raw20b=parseFloat(document.getElementById('m20b').value)||undefined;
-  const obj={
-    id:artId,name,
-    cat:document.getElementById('mCat').value,
-    price:+price.toFixed(4),
-    unit:document.getElementById('mUnit').value,
-    ...(raw20b?{raw20b:+raw20b.toFixed(4)}:{})
-  };
+  const obj={id:artId,name,cat:document.getElementById('mCat').value,price:+price.toFixed(4),unit:document.getElementById('mUnit').value,...(raw20b?{raw20b:+raw20b.toFixed(4)}:{})};
   if(editingId){
-    const idx=prods.findIndex(p=>p.id===editingId);
-    if(idx>=0)prods[idx]=obj;
-  } else {
-    prods.push(obj);
+    const idx=prods.findIndex(p=>p.id===editingId);if(idx>=0)prods[idx]=obj;
+    await sv(obj);
+  }else{
+    try{
+      const r=await sbFetch('/rest/v1/afa_precios',{method:'POST',body:JSON.stringify({...obj,raw20b:obj.raw20b||null,updated_at:new Date().toISOString()})});
+      if(r&&r[0])prods.push(r[0]);else prods.push(obj);
+    }catch(e){prods.push(obj);}
   }
-  await sv(obj);
   closeModal();
   if(document.getElementById('vEd').style.display!=='none')rel();
   else{rcats();rg();}
@@ -729,7 +718,7 @@ async function delProd(){
   closeModal();rel();toast('Producto eliminado');
 }
 
-// ── EDITAR LISTA INLINE ──
+// ── EDITAR INLINE ──
 function rel(){
   document.getElementById('elg').innerHTML=prods.map(p=>`
     <div class="ei">
@@ -743,9 +732,8 @@ function rel(){
 function upd(id,f,v){const p=prods.find(p=>p.id===id);if(p)p[f]=v;}
 async function saveL(){
   toast('⏳ Guardando...');
-  for(const p of prods) await sv(p);
-  toast('✓ Lista guardada');
-  showView('ver');
+  for(const p of prods)await sv(p);
+  toast('✓ Lista guardada');showView('ver');
 }
 
 // ── INIT ──
