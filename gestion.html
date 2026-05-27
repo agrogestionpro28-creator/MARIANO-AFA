@@ -563,6 +563,10 @@ async function sb(path,opts={}){
 let clientes=[],pedidos=[],objetivos=[],notas=[];
 let editingCli=null,editingPed=null,editingObj=null;
 let pedItemCount=0;
+// Ventas
+let chartBarras=null,chartTorta=null,chartLinea=null;
+let graficosVisible=false;
+let detalleActualObj=null;
 
 // ── UTILS ──
 const fmt=n=>n?Number(n).toLocaleString('es-AR'):'—';
@@ -1271,8 +1275,6 @@ function renderObjetivos(){
 }
 
 // ── DETALLE PRODUCTO FOCO ──
-let detalleActualObj=null;
-
 function openDetalleFoco(id){
   const o=objetivos.find(x=>x.id===id);
   if(!o)return;
@@ -1510,8 +1512,6 @@ init();
 // ══════════════════════════════════════════
 // VENTAS
 // ══════════════════════════════════════════
-let chartBarras=null,chartTorta=null,chartLinea=null;
-let graficosVisible=false;
 
 function toggleVentasGraficos(){
   graficosVisible=!graficosVisible;
