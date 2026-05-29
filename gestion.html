@@ -451,7 +451,14 @@ tr:hover td{background:rgba(255,255,255,.02);}
         <div class="fg"><label>¿Tiene forward?</label><select id="pedForward"><option value="">— Sin definir —</option><option value="si">✅ Sí</option><option value="no">❌ No</option></select></div>
       </div>
     </div>
-    <div class="fg"><label>Observaciones</label><textarea id="pedObs" placeholder="Notas adicionales..."></textarea></div>
+    <div class="fg">
+      <label>Observaciones</label>
+      <textarea id="pedObs" placeholder="Notas adicionales..."></textarea>
+      <div style="margin-top:6px;display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="pedObsImg" style="width:16px;height:16px;cursor:pointer;accent-color:var(--g);">
+        <label for="pedObsImg" style="font-size:12px;color:rgba(255,255,255,.4);cursor:pointer;text-transform:none;letter-spacing:0;">Incluir observaciones en la imagen</label>
+      </div>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-danger" id="pedDelBtn" onclick="deletePedido()" style="display:none;margin-right:auto">🗑 Eliminar</button>
       <button class="btn btn-secondary btn-sm" onclick="generarImagenPedido()">📸 Imagen</button>
@@ -753,14 +760,53 @@ function renderPedidos(){
   if(filtro==='sin_seguro')f=f.filter(p=>isCosecha(p.forma_pago)&&p.seguro!=='si');
   if(filtro==='sin_forward')f=f.filter(p=>isCosecha(p.forma_pago)&&p.forward!=='si');
   const sinPago=pedidos.filter(p=>!p.forma_pago).length;
-  const sinSeg=pedidos.filter(p=>isCosecha(p.forma_pago)&&p.seguro!=='si').length;
-  const sinFwd=pedidos.filter(p=>isCosecha(p.forma_pago)&&p.forward!=='si').length;
   const sinCod=pedidos.filter(p=>{const items=p.items?JSON.parse(p.items):[];return items.some(i=>i.prod&&!preciosCache.some(pc=>pc.name===i.prod));}).length;
+
+  // Alertas de cobertura por PRODUCTOR + condición de cosecha
+  // Agrupar: { productor: { formaPago: { seguro, forward } } }
+  const cobProd={};
+  pedidos.filter(p=>isCosecha(p.forma_pago)&&p.cliente).forEach(p=>{
+    if(!cobProd[p.cliente])cobProd[p.cliente]={};
+    if(!cobProd[p.cliente][p.forma_pago]){
+      cobProd[p.cliente][p.forma_pago]={seguro:p.seguro,forward:p.forward};
+    } else {
+      // Si ya existe, "si" gana sobre vacío/no
+      if(p.seguro==='si')cobProd[p.cliente][p.forma_pago].seguro='si';
+      if(p.forward==='si')cobProd[p.cliente][p.forma_pago].forward='si';
+    }
+  });
+
+  // Construir lista de problemas por productor
+  const problemas={};
+  Object.entries(cobProd).forEach(([prod,pagos])=>{
+    Object.entries(pagos).forEach(([pago,cob])=>{
+      const faltaSeg=cob.seguro!=='si';
+      const faltaFwd=cob.forward!=='si';
+      if(faltaSeg||faltaFwd){
+        if(!problemas[prod])problemas[prod]=[];
+        const faltan=[];
+        if(faltaSeg)faltan.push('seguro');
+        if(faltaFwd)faltan.push('forward');
+        problemas[prod].push(`${pago}: falta ${faltan.join(' y ')}`);
+      }
+    });
+  });
+
   let al='';
   if(sinPago)al+=`<div class="alert-box">⚠️ <strong>${sinPago} pedido${sinPago>1?'s':''} sin forma de pago</strong></div>`;
-  if(sinSeg)al+=`<div class="alert-box">🛡️ <strong>${sinSeg} pedido${sinSeg>1?'s':''} a cosecha sin seguro</strong></div>`;
-  if(sinFwd)al+=`<div class="alert-box">📊 <strong>${sinFwd} pedido${sinFwd>1?'s':''} a cosecha sin forward</strong></div>`;
-  if(sinCod)al+=`<div class="alert-box" style="color:var(--gold);background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.25);">🔶 <strong>${sinCod} pedido${sinCod>1?'s':''} con productos sin código</strong></div>`;
+  if(sinCod)al+=`<div class="alert-box" style="color:var(--gold);">🔶 <strong>${sinCod} pedido${sinCod>1?'s':''} con productos sin código</strong></div>`;
+
+  const cantProd=Object.keys(problemas).length;
+  if(cantProd>0){
+    const filas=Object.entries(problemas).map(([prod,items])=>`
+      <div style="padding:8px 0;border-bottom:1px solid rgba(245,158,11,.15);">
+        <div style="font-weight:700;color:white;margin-bottom:3px;">👤 ${prod}</div>
+        ${items.map(i=>`<div style="font-size:12px;color:rgba(255,255,255,.6);padding-left:12px;">• ${i}</div>`).join('')}
+      </div>`).join('');
+    al+=`<div class="alert-box" style="color:var(--gold);">
+      <div style="font-weight:700;margin-bottom:8px;">🛡️ <strong>${cantProd} productor${cantProd>1?'es':''} con cobertura incompleta a cosecha</strong></div>
+      ${filas}
+    </div>`;}
   document.getElementById('pedAlertas').innerHTML=al;
   const list=document.getElementById('pedList');
   if(!f.length){list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><p>Sin pedidos aún</p></div>`;return;}
@@ -848,6 +894,7 @@ function openPedidoModal(id){
   document.getElementById('pedPago').value=p.forma_pago||'';document.getElementById('pedSeguro').value=p.seguro||'';
   document.getElementById('pedForward').value=p.forward||'';document.getElementById('pedObs').value=p.obs||'';
   pedItemCount2=0;document.getElementById('pedItems').innerHTML='';
+  document.getElementById('pedObsImg').checked=false;
   const items=p.items?JSON.parse(p.items):[];
   if(items.length)items.forEach(i=>addPedItem(i));else addPedItem();
   toggleCosecha();document.getElementById('modalPedido').classList.add('open');
@@ -898,8 +945,18 @@ function capturePedCard(){
   },100);
 }
 function dlCanvas(canvas){const a=document.createElement('a');a.download='pedido-afa.png';a.href=canvas.toDataURL('image/png');a.click();toast('✓ Imagen guardada');}
-function generarImagenPedido(){buildPedCard(document.getElementById('pedCliente').value,document.getElementById('pedFecha').value,getPedItems(),document.getElementById('pedPago').value,document.getElementById('pedObs').value);capturePedCard();}
-function generarImagenPedidoId(id){const p=pedidos.find(x=>x.id===id);if(!p)return;const items=p.items?JSON.parse(p.items):[];buildPedCard(p.cliente,p.fecha,items,p.forma_pago,p.obs);capturePedCard();}
+function generarImagenPedido(){
+  const obsIncluir=document.getElementById('pedObsImg').checked;
+  const obs=obsIncluir?document.getElementById('pedObs').value:'';
+  buildPedCard(document.getElementById('pedCliente').value,document.getElementById('pedFecha').value,getPedItems(),document.getElementById('pedPago').value,obs);
+  capturePedCard();
+}
+function generarImagenPedidoId(id){
+  const p=pedidos.find(x=>x.id===id);if(!p)return;
+  const items=p.items?JSON.parse(p.items):[];
+  // Desde la lista siempre incluye obs
+  buildPedCard(p.cliente,p.fecha,items,p.forma_pago,p.obs);capturePedCard();
+}
 function exportPedidosXLS(){
   const data=pedidos.map(p=>{const items=p.items?JSON.parse(p.items).map(i=>`${i.prod} x${i.cant} ${i.unit}`).join(', '):'';
     return{'Fecha':p.fecha,'Cliente':p.cliente,'Productos':items,'Forma de pago':p.forma_pago||'','Seguro':p.seguro||'','Forward':p.forward||''};});
