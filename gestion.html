@@ -298,25 +298,52 @@ tr:hover td{background:rgba(255,255,255,.02);}
 <!-- PEDIDOS -->
 <div id="v-pedidos" class="view">
   <div class="sec-title">
-    <div><h2>📋 Pedidos</h2><p>Registro diario de pedidos</p></div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <h2>📋 Pedidos</h2>
+      <!-- BADGES DE ALERTAS -->
+      <div id="pedBadges" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
     <div class="sec-actions">
       <button class="btn btn-secondary btn-sm" onclick="exportPedidosXLS()">⬇ Excel</button>
+      <button class="btn btn-secondary btn-sm" id="btnHistorial" onclick="toggleHistorial()">📁 Historial</button>
       <button class="btn btn-primary" onclick="openPedidoModal()">+ Nuevo pedido</button>
     </div>
   </div>
-  <div id="pedAlertas"></div>
-  <div class="search-row">
-    <div class="search-box"><span class="search-icon">🔍</span><input type="text" id="pedSearch" placeholder="Buscar cliente o producto..." oninput="renderPedidos()"></div>
-    <select id="pedFiltro" class="filter-select" onchange="renderPedidos()">
-      <option value="">Todos</option>
-      <option value="sin_pago">Sin forma de pago</option>
-      <option value="cosecha">A cosecha</option>
-      <option value="sin_seguro">Cosecha sin seguro</option>
-      <option value="sin_forward">Cosecha sin forward</option>
-    </select>
+
+  <!-- VISTA MES ACTUAL -->
+  <div id="pedMesActual">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;" id="pedMesLabel"></div>
+    <div class="search-row">
+      <div class="search-box"><span class="search-icon">🔍</span><input type="text" id="pedSearch" placeholder="Buscar cliente o producto..." oninput="renderPedidos()"></div>
+      <select id="pedFiltro" class="filter-select" onchange="renderPedidos()">
+        <option value="">Todos</option>
+        <option value="sin_pago">Sin forma de pago</option>
+        <option value="cosecha">A cosecha</option>
+        <option value="sin_seguro">Cosecha sin seguro</option>
+        <option value="sin_forward">Cosecha sin forward</option>
+      </select>
+    </div>
+    <div id="pedList"></div>
   </div>
-  <div id="pedList"></div>
+
+  <!-- HISTORIAL POR MES -->
+  <div id="pedHistorial" style="display:none;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">📁 Historial de pedidos</div>
+    <div id="pedHistorialList"></div>
+  </div>
 </div>
+
+<!-- MODAL ALERTAS DETALLE -->
+<div class="modal-bg" id="modalAlertas">
+  <div class="modal" style="max-width:600px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h2 id="alertasModalTitle">Detalle</h2>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modalAlertas')">✕ Cerrar</button>
+    </div>
+    <div id="alertasModalContent"></div>
+  </div>
+</div>
+
 
 <!-- OBJETIVOS -->
 <div id="v-objetivos" class="view">
@@ -750,86 +777,185 @@ async function loadPreciosCache(){
   try{const d=await sb('/rest/v1/afa_precios?select=name,unit,cat&order=name');preciosCache=d||[];preciosCacheConCat=d||[];}
   catch(e){preciosCache=[];preciosCacheConCat=[];}
 }
+let historialVisible=false;
+
+function toggleHistorial(){
+  historialVisible=!historialVisible;
+  document.getElementById('pedMesActual').style.display=historialVisible?'none':'block';
+  document.getElementById('pedHistorial').style.display=historialVisible?'block':'none';
+  document.getElementById('btnHistorial').classList.toggle('active',historialVisible);
+  if(historialVisible)renderHistorial();
+}
+
+function getMesActual(){
+  const now=new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+}
+
+function getMesKey(fecha){
+  if(!fecha)return'sin-fecha';
+  return fecha.substring(0,7); // YYYY-MM
+}
+
+function getMesLabel(key){
+  if(key==='sin-fecha')return'Sin fecha';
+  const [y,m]=key.split('-');
+  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  return`${meses[+m-1]} ${y}`;
+}
+
 function renderPedidos(){
+  const mesActual=getMesActual();
+
+  // Filtrar solo mes actual
   const q=document.getElementById('pedSearch').value.trim().toLowerCase();
   const filtro=document.getElementById('pedFiltro').value;
-  let f=pedidos;
+  let f=pedidos.filter(p=>getMesKey(p.fecha)===mesActual);
   if(q)f=f.filter(p=>(p.cliente||'').toLowerCase().includes(q)||(p.items||'').toLowerCase().includes(q));
   if(filtro==='sin_pago')f=f.filter(p=>!p.forma_pago);
   if(filtro==='cosecha')f=f.filter(p=>isCosecha(p.forma_pago));
   if(filtro==='sin_seguro')f=f.filter(p=>isCosecha(p.forma_pago)&&p.seguro!=='si');
   if(filtro==='sin_forward')f=f.filter(p=>isCosecha(p.forma_pago)&&p.forward!=='si');
+
+  // Label mes actual
+  document.getElementById('pedMesLabel').textContent=getMesLabel(mesActual)+' — '+f.length+' pedido'+( f.length!==1?'s':'');
+
+  // Renderizar lista
+  const list=document.getElementById('pedList');
+  if(!f.length){list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><p>Sin pedidos en ${getMesLabel(mesActual)}</p></div>`;return;}
+  list.innerHTML=f.map(p=>renderPedCard(p)).join('');
+
+  // Badges de alertas
+  renderPedBadges();
+}
+
+function renderPedBadges(){
   const sinPago=pedidos.filter(p=>!p.forma_pago).length;
   const sinCod=pedidos.filter(p=>{const items=p.items?JSON.parse(p.items):[];return items.some(i=>i.prod&&!preciosCache.some(pc=>pc.name===i.prod));}).length;
 
-  // Alertas de cobertura por PRODUCTOR + condición de cosecha
-  // Agrupar: { productor: { formaPago: { seguro, forward } } }
+  // Cobertura incompleta por productor
   const cobProd={};
   pedidos.filter(p=>isCosecha(p.forma_pago)&&p.cliente).forEach(p=>{
     if(!cobProd[p.cliente])cobProd[p.cliente]={};
-    if(!cobProd[p.cliente][p.forma_pago]){
-      cobProd[p.cliente][p.forma_pago]={seguro:p.seguro,forward:p.forward};
-    } else {
-      // Si ya existe, "si" gana sobre vacío/no
-      if(p.seguro==='si')cobProd[p.cliente][p.forma_pago].seguro='si';
-      if(p.forward==='si')cobProd[p.cliente][p.forma_pago].forward='si';
-    }
+    if(!cobProd[p.cliente][p.forma_pago]){cobProd[p.cliente][p.forma_pago]={seguro:p.seguro,forward:p.forward};}
+    else{if(p.seguro==='si')cobProd[p.cliente][p.forma_pago].seguro='si';if(p.forward==='si')cobProd[p.cliente][p.forma_pago].forward='si';}
   });
-
-  // Construir lista de problemas por productor
   const problemas={};
   Object.entries(cobProd).forEach(([prod,pagos])=>{
     Object.entries(pagos).forEach(([pago,cob])=>{
-      const faltaSeg=cob.seguro!=='si';
-      const faltaFwd=cob.forward!=='si';
-      if(faltaSeg||faltaFwd){
+      if(cob.seguro!=='si'||cob.forward!=='si'){
         if(!problemas[prod])problemas[prod]=[];
-        const faltan=[];
-        if(faltaSeg)faltan.push('seguro');
-        if(faltaFwd)faltan.push('forward');
-        problemas[prod].push(`${pago}: falta ${faltan.join(' y ')}`);
+        const faltan=[];if(cob.seguro!=='si')faltan.push('seguro');if(cob.forward!=='si')faltan.push('forward');
+        problemas[prod].push({pago,faltan});
       }
     });
   });
-
-  let al='';
-  if(sinPago)al+=`<div class="alert-box">⚠️ <strong>${sinPago} pedido${sinPago>1?'s':''} sin forma de pago</strong></div>`;
-  if(sinCod)al+=`<div class="alert-box" style="color:var(--gold);">🔶 <strong>${sinCod} pedido${sinCod>1?'s':''} con productos sin código</strong></div>`;
-
   const cantProd=Object.keys(problemas).length;
-  if(cantProd>0){
-    const filas=Object.entries(problemas).map(([prod,items])=>`
-      <div style="padding:8px 0;border-bottom:1px solid rgba(245,158,11,.15);">
-        <div style="font-weight:700;color:white;margin-bottom:3px;">👤 ${prod}</div>
-        ${items.map(i=>`<div style="font-size:12px;color:rgba(255,255,255,.6);padding-left:12px;">• ${i}</div>`).join('')}
-      </div>`).join('');
-    al+=`<div class="alert-box" style="color:var(--gold);">
-      <div style="font-weight:700;margin-bottom:8px;">🛡️ <strong>${cantProd} productor${cantProd>1?'es':''} con cobertura incompleta a cosecha</strong></div>
-      ${filas}
-    </div>`;}
-  document.getElementById('pedAlertas').innerHTML=al;
-  const list=document.getElementById('pedList');
-  if(!f.length){list.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><p>Sin pedidos aún</p></div>`;return;}
-  list.innerHTML=f.map(p=>{
-    const items=p.items?JSON.parse(p.items):[];
-    const itemsTxt=items.map(i=>`${i.prod} x ${i.cant} ${i.unit||''}`).join(' · ');
-    const cos=isCosecha(p.forma_pago);
-    let badges=p.forma_pago?`<span class="badge badge-green">${p.forma_pago}</span> `:`<span class="badge badge-amber">Sin pago</span> `;
-    if(cos){badges+=p.seguro==='si'?`<span class="badge badge-blue">🛡 Seguro</span> `:`<span class="badge badge-red">Sin seguro</span> `;
-      badges+=p.forward==='si'?`<span class="badge badge-blue">📊 Forward</span>`:`<span class="badge badge-red">Sin forward</span>`;}
-    return`<div class="ped-card">
-      <div class="ped-header"><div class="ped-cliente">${p.cliente||'—'}</div><div class="ped-date">${p.fecha?new Date(p.fecha+'T12:00:00').toLocaleDateString('es-AR'):''}</div></div>
-      <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:6px;">${itemsTxt||'Sin productos'}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
-        <div>${badges}</div>
-        <div class="td-actions">
-          <button class="btn btn-secondary btn-sm" onclick="generarImagenPedidoId('${p.id}')">📸</button>
-          <button class="btn btn-secondary btn-sm" onclick="openPedidoModal('${p.id}')">✏️</button>
+
+  let badges='';
+  if(sinPago>0)badges+=`<span onclick="showAlertaModal('pago')" style="cursor:pointer;background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:#f87171;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;">⚠️ ${sinPago} sin pago</span>`;
+  if(cantProd>0)badges+=`<span onclick="showAlertaModal('cobertura')" style="cursor:pointer;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--gold);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;">🛡️ ${cantProd} sin cobertura</span>`;
+  if(sinCod>0)badges+=`<span onclick="showAlertaModal('codigo')" style="cursor:pointer;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:rgba(245,158,11,.7);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;">🔶 ${sinCod} sin código</span>`;
+
+  document.getElementById('pedBadges').innerHTML=badges;
+
+  // Guardar problemas para el modal
+  window._pedProblemas={sinPago:pedidos.filter(p=>!p.forma_pago),problemas,sinCod:pedidos.filter(p=>{const items=p.items?JSON.parse(p.items):[];return items.some(i=>i.prod&&!preciosCache.some(pc=>pc.name===i.prod));})};
+}
+
+function showAlertaModal(tipo){
+  const data=window._pedProblemas||{};
+  let title='',content='';
+  if(tipo==='pago'){
+    title='⚠️ Pedidos sin forma de pago';
+    content=data.sinPago?.map(p=>`<div style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="font-weight:700;color:white;">${p.cliente||'—'}</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:2px;">${p.fecha?new Date(p.fecha+'T12:00:00').toLocaleDateString('es-AR'):''} · ${p.items?JSON.parse(p.items).map(i=>i.prod).join(', '):''}</div>
+    </div>`).join('')||'Sin datos';
+  }else if(tipo==='cobertura'){
+    title='🛡️ Productores con cobertura incompleta';
+    content=Object.entries(data.problemas||{}).map(([prod,items])=>`
+      <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+        <div style="font-weight:700;color:white;margin-bottom:4px;">👤 ${prod}</div>
+        ${items.map(i=>`<div style="font-size:12px;color:rgba(255,255,255,.5);padding-left:12px;">• ${i.pago}: falta <strong style="color:var(--gold)">${i.faltan.join(' y ')}</strong></div>`).join('')}
+      </div>`).join('')||'Sin datos';
+  }else if(tipo==='codigo'){
+    title='🔶 Pedidos con productos sin código';
+    content=data.sinCod?.map(p=>{
+      const items=p.items?JSON.parse(p.items):[];
+      const sinCod=items.filter(i=>i.prod&&!preciosCache.some(pc=>pc.name===i.prod));
+      return`<div style="padding:10px 0;border-bottom:1px solid var(--border);">
+        <div style="font-weight:700;color:white;">${p.cliente||'—'}</div>
+        <div style="font-size:12px;color:var(--gold);margin-top:2px;">${sinCod.map(i=>i.prod).join(', ')}</div>
+      </div>`;}).join('')||'Sin datos';
+  }
+  document.getElementById('alertasModalTitle').textContent=title;
+  document.getElementById('alertasModalContent').innerHTML=`<div style="max-height:400px;overflow-y:auto;">${content}</div>`;
+  document.getElementById('modalAlertas').classList.add('open');
+}
+
+function renderHistorial(){
+  const mesActual=getMesActual();
+  // Agrupar por mes (excluyendo mes actual que ya se ve)
+  const grupos={};
+  pedidos.forEach(p=>{
+    const key=getMesKey(p.fecha);
+    if(key===mesActual)return; // ya está en la vista principal
+    if(!grupos[key])grupos[key]=[];
+    grupos[key].push(p);
+  });
+  const keys=Object.keys(grupos).sort().reverse();
+  if(!keys.length){
+    document.getElementById('pedHistorialList').innerHTML=`<div class="empty"><div class="empty-icon">📁</div><p>Sin pedidos anteriores</p></div>`;
+    return;
+  }
+  document.getElementById('pedHistorialList').innerHTML=keys.map(key=>{
+    const ps=grupos[key];
+    const id='hist_'+key.replace('-','_');
+    return`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;">
+      <div onclick="toggleHist('${id}')" style="padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid transparent;" id="${id}_hdr">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:white;">📁 ${getMesLabel(key)}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:12px;color:rgba(255,255,255,.3);">${ps.length} pedido${ps.length!==1?'s':''}</span>
+          <span id="${id}_arr" style="color:rgba(255,255,255,.3);font-size:14px;">▾</span>
         </div>
       </div>
-      ${p.obs?`<div style="font-size:12px;color:rgba(255,255,255,.3);margin-top:6px">${p.obs}</div>`:''}
+      <div id="${id}" style="display:none;padding:12px 16px;">
+        ${ps.map(p=>renderPedCard(p)).join('')}
+      </div>
     </div>`;
   }).join('');
+}
+
+function toggleHist(id){
+  const el=document.getElementById(id);
+  const arr=document.getElementById(id+'_arr');
+  const hdr=document.getElementById(id+'_hdr');
+  const open=el.style.display==='none';
+  el.style.display=open?'block':'none';
+  arr.textContent=open?'▴':'▾';
+  hdr.style.borderBottomColor=open?'var(--border)':'transparent';
+}
+
+function renderPedCard(p){
+  const items=p.items?JSON.parse(p.items):[];
+  const itemsTxt=items.map(i=>`${i.prod} x ${i.cant} ${i.unit||''}`).join(' · ');
+  const cos=isCosecha(p.forma_pago);
+  let badges=p.forma_pago?`<span class="badge badge-green">${p.forma_pago}</span> `:`<span class="badge badge-red" style="background:rgba(239,68,68,.2);color:#f87171;border-color:rgba(239,68,68,.4);">Sin pago</span> `;
+  if(cos){badges+=p.seguro==='si'?`<span class="badge badge-blue">🛡 Seguro</span> `:`<span class="badge badge-red">Sin seguro</span> `;
+    badges+=p.forward==='si'?`<span class="badge badge-blue">📊 Forward</span>`:`<span class="badge badge-red">Sin forward</span>`;}
+  return`<div class="ped-card" style="${!p.forma_pago?'border-color:rgba(239,68,68,.3);':''}" >
+    <div class="ped-header"><div class="ped-cliente">${p.cliente||'—'}</div><div class="ped-date">${p.fecha?new Date(p.fecha+'T12:00:00').toLocaleDateString('es-AR'):''}</div></div>
+    <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:6px;">${itemsTxt||'Sin productos'}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+      <div>${badges}</div>
+      <div class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="generarImagenPedidoId('${p.id}')">📸</button>
+        <button class="btn btn-secondary btn-sm" onclick="openPedidoModal('${p.id}')">✏️</button>
+      </div>
+    </div>
+    ${p.obs?`<div style="font-size:12px;color:rgba(255,255,255,.3);margin-top:6px">${p.obs}</div>`:''}
+  </div>`;
 }
 function addPedItem(item){
   pedItemCount2++;const n=pedItemCount2;
@@ -913,7 +1039,7 @@ async function savePedido(){
       await sb(`/rest/v1/afa_pedidos?id=eq.${editingPed}`,{method:'PATCH',body:JSON.stringify(obj)});
       const idx=pedidos.findIndex(x=>x.id===editingPed);if(idx>=0)pedidos[idx]={...pedidos[idx],...obj};
     }else{const r=await sb('/rest/v1/afa_pedidos',{method:'POST',body:JSON.stringify(obj)});if(r&&r[0])pedidos.unshift(r[0]);}
-    closeModal('modalPedido');renderPedidos();renderObjetivos();toast(editingPed?'✓ Pedido actualizado':'✓ Pedido guardado');
+    closeModal('modalPedido');renderPedidos();renderObjetivos();if(historialVisible)renderHistorial();toast(editingPed?'✓ Pedido actualizado':'✓ Pedido guardado');
   }catch(e){toast('Error: '+e.message);}
 }
 async function deletePedido(){
