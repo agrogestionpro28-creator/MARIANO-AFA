@@ -425,7 +425,94 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <div class="sec-actions"><button class="btn btn-primary" onclick="openNotaModal()">+ Nueva nota</button></div>
   </div>
   <div id="notaList"></div>
+
+  <!-- RESUMEN COSECHA -->
+  <div style="margin-top:28px;">
+    <div class="sec-lbl">Resumen de Cosecha — Generador de imagen</div>
+    <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-top:1px solid var(--border2);border-radius:14px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
+
+      <!-- FORM -->
+      <div class="fg-row" style="margin-bottom:12px;">
+        <div class="fg">
+          <label>Productor</label>
+          <select id="cosProducer" style="width:100%;padding:9px 11px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;color:white;">
+            <option value="">— Seleccionar —</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Campaña</label>
+          <input id="cosCampana" placeholder="Ej: 26/27" value="26/27"
+            style="width:100%;padding:9px 11px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'Barlow',sans-serif;outline:none;color:white;">
+        </div>
+      </div>
+
+      <!-- TABLA DE CULTIVOS -->
+      <div style="margin-bottom:10px;">
+        <div style="display:grid;grid-template-columns:80px 1fr 1fr 1fr auto;gap:6px;padding:0 4px;margin-bottom:4px;">
+          <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.3);">Cosecha</span>
+          <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.3);">Cultivo</span>
+          <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.3);">Kgs Entregados</span>
+          <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.3);">Kgs Certificados</span>
+          <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.3);">Kgs Disponibles</span>
+          <span></span>
+        </div>
+        <div id="cosRows"></div>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="addCosRow()">+ Agregar cultivo</button>
+        <button class="btn btn-primary" onclick="generarImagenCosecha()" id="btnCosecha">📸 Generar imagen</button>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- TARJETA COSECHA OCULTA -->
+<div id="cosCard" style="position:fixed;left:-9999px;top:0;width:520px;font-family:'Barlow',sans-serif;overflow:hidden;border-radius:0;">
+
+  <!-- Header verde AFA -->
+  <div style="background:linear-gradient(135deg,#0f3d24,#1a6640,#2EAA6E);padding:20px 24px;position:relative;overflow:hidden;">
+    <div style="position:absolute;inset:0;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2256%22 height=%22100%22%3E%3Cpath d=%22M28 66L0 50V16L28 0l28 16v34L28 66z%22 fill=%22none%22 stroke=%22white%22 stroke-opacity=%220.04%22 stroke-width=%221%22/%3E%3C/svg%3E');pointer-events:none;"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;position:relative;">
+      <div style="background:rgba(255,255,255,.15);border:1.5px solid rgba(245,158,11,.5);border-radius:8px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;">
+        <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:white;letter-spacing:-1px;">AFA</span>
+      </div>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.65);">Agricultores Federados Argentinos</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:600;letter-spacing:1px;color:rgba(255,255,255,.45);text-transform:uppercase;">San Carlos Centro</div>
+      </div>
+    </div>
+    <div style="position:relative;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:28px;color:white;line-height:1;" id="cosCardProducer">PRODUCTOR</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:rgba(255,255,255,.55);margin-top:3px;letter-spacing:.5px;" id="cosCardCampana">Campaña —</div>
+    </div>
+    <!-- Birrete argentino decorativo -->
+    <div style="position:absolute;right:16px;top:50%;transform:translateY(-50%);opacity:.15;font-size:64px;line-height:1;">🇦🇷</div>
+  </div>
+
+  <!-- Cuerpo negro con tabla -->
+  <div style="background:#0a0a0a;padding:20px 24px;">
+
+    <!-- Encabezados tabla -->
+    <div style="display:grid;grid-template-columns:60px 1fr 1fr 1fr 1fr;gap:0;margin-bottom:0;">
+      <div style="background:#f59e0b;padding:8px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#0a0a0a;border-radius:6px 0 0 0;">Cosecha</div>
+      <div style="background:#f59e0b;padding:8px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#0a0a0a;">Cultivo</div>
+      <div style="background:#1d7a4e;padding:8px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:white;text-align:right;">Kgs Entregados</div>
+      <div style="background:#1d7a4e;padding:8px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:white;text-align:right;">Kgs Certificados</div>
+      <div style="background:#2EAA6E;padding:8px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:white;text-align:right;border-radius:0 6px 0 0;">Kgs Disponibles</div>
+    </div>
+
+    <!-- Filas -->
+    <div id="cosCardRows"></div>
+
+    <!-- Footer -->
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid rgba(245,158,11,.2);display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:10px;color:rgba(255,255,255,.3);font-family:'Barlow',sans-serif;">📅 Generado el <span id="cosCardFecha"></span></div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;color:rgba(245,158,11,.5);">AFA · ASOCIACIÓN FEDERADA ARGENTINA</div>
+    </div>
+  </div>
+</div>
+
 
 </main>
 
@@ -594,7 +681,7 @@ function showView(v,btn){
   if(v==='clientes')renderClientes();
   if(v==='pedidos')renderPedidos();
   if(v==='objetivos')renderObjetivos();
-  if(v==='agenda')renderNotas();
+  if(v==='agenda'){renderNotas();initCosecha();}
   if(v==='ventas'){renderVentas();if(graficosVisible)renderGraficos();}
 }
 
@@ -1353,6 +1440,102 @@ async function saveNota(){
 async function deleteNota(id){
   if(!confirm('¿Eliminar nota?'))return;
   await sb(`/rest/v1/afa_notas?id=eq.${id}`,{method:'DELETE'});notas=notas.filter(x=>x.id!==id);renderNotas();toast('Nota eliminada');
+}
+
+// ══ COSECHA ══
+let cosRowCount=0;
+const CULTIVOS=['Maíz','Soja','Trigo','Girasol','Sorgo','Maíz 2da','Soja 2da','Sorgo 2da','Otros'];
+
+function initCosecha(){
+  // Llenar selector de productores
+  const sel=document.getElementById('cosProducer');
+  if(sel){
+    sel.innerHTML='<option value="">— Seleccionar —</option>'+
+      clientes.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(c=>`<option value="${c.nombre}">${c.nombre}</option>`).join('');
+  }
+  // Agregar 3 filas por defecto
+  if(document.getElementById('cosRows')&&document.getElementById('cosRows').children.length===0){
+    addCosRow('26','Maíz','','','');
+    addCosRow('26','Soja','','','');
+    addCosRow('26','Girasol','','','');
+  }
+}
+
+function addCosRow(cosecha='',cultivo='',entregados='',certificados='',disponibles=''){
+  cosRowCount++;
+  const n=cosRowCount;
+  const div=document.createElement('div');
+  div.id=`cosrow_${n}`;
+  div.style.cssText='display:grid;grid-template-columns:80px 1fr 1fr 1fr auto;gap:6px;margin-bottom:6px;align-items:center;';
+  const inpStyle='padding:7px 9px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:7px;font-size:13px;font-family:\'Barlow\',sans-serif;outline:none;color:white;width:100%;';
+  const cultOpts=CULTIVOS.map(c=>`<option value="${c}" ${c===cultivo?'selected':''}>${c}</option>`).join('');
+  div.innerHTML=`
+    <input placeholder="26" value="${cosecha}" style="${inpStyle}">
+    <select style="${inpStyle}background:#1a1a1a;">${cultOpts}</select>
+    <input type="text" placeholder="0,00" value="${entregados}" style="${inpStyle}text-align:right;">
+    <input type="text" placeholder="0,00" value="${certificados}" style="${inpStyle}text-align:right;">
+    <input type="text" placeholder="0,00" value="${disponibles}" style="${inpStyle}text-align:right;">
+    <button onclick="document.getElementById('cosrow_${n}').remove()" style="background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.25);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:14px;flex-shrink:0;">✕</button>`;
+  document.getElementById('cosRows').appendChild(div);
+}
+
+function getCosRows(){
+  return[...document.getElementById('cosRows').children].map(div=>{
+    const ins=div.querySelectorAll('input,select');
+    return{cosecha:ins[0].value.trim(),cultivo:ins[1].value,entregados:ins[2].value.trim(),certificados:ins[3].value.trim(),disponibles:ins[4].value.trim()};
+  }).filter(r=>r.cultivo);
+}
+
+function fmtKg(v){if(!v||v==='')return'—';const n=parseFloat(v.replace(/\./g,'').replace(',','.'));return isNaN(n)?v:n.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+function generarImagenCosecha(){
+  const productor=document.getElementById('cosProducer').value;
+  const campana=document.getElementById('cosCampana').value;
+  if(!productor){toast('Seleccioná un productor');return;}
+  const rows=getCosRows();
+  if(!rows.length){toast('Agregá al menos un cultivo');return;}
+
+  // Llenar tarjeta
+  document.getElementById('cosCardProducer').textContent=productor.toUpperCase();
+  document.getElementById('cosCardCampana').textContent=`Campaña ${campana}`;
+  document.getElementById('cosCardFecha').textContent=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+
+  // Filas
+  document.getElementById('cosCardRows').innerHTML=rows.map((r,i)=>{
+    const bg=i%2===0?'rgba(255,255,255,.03)':'transparent';
+    return`<div style="display:grid;grid-template-columns:60px 1fr 1fr 1fr 1fr;gap:0;background:${bg};border-bottom:1px solid rgba(255,255,255,.05);">
+      <div style="padding:9px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:#f59e0b;">${r.cosecha}</div>
+      <div style="padding:9px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:white;">${r.cultivo.toUpperCase()}</div>
+      <div style="padding:9px 10px;font-size:13px;color:rgba(255,255,255,.8);text-align:right;font-family:'Barlow',sans-serif;">${fmtKg(r.entregados)}</div>
+      <div style="padding:9px 10px;font-size:13px;color:rgba(255,255,255,.8);text-align:right;font-family:'Barlow',sans-serif;">${fmtKg(r.certificados)}</div>
+      <div style="padding:9px 10px;font-size:13px;font-weight:700;color:#2EAA6E;text-align:right;font-family:'Barlow',sans-serif;">${fmtKg(r.disponibles)}</div>
+    </div>`;
+  }).join('');
+
+  // Capturar
+  const card=document.getElementById('cosCard');
+  card.style.left='0';card.style.top='0';card.style.position='absolute';card.style.zIndex='-1';
+  const btn=document.getElementById('btnCosecha');btn.textContent='⏳ Generando...';btn.disabled=true;
+
+  setTimeout(()=>{
+    html2canvas(card,{scale:3,backgroundColor:'#0a0a0a',useCORS:true,logging:false}).then(canvas=>{
+      card.style.left='-9999px';card.style.position='fixed';
+      canvas.toBlob(blob=>{
+        const file=new File([blob],`cosecha-${productor.split(',')[0]}.png`,{type:'image/png'});
+        if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]}))
+          navigator.share({files:[file],title:'Resumen Cosecha AFA'}).catch(()=>dlCos(canvas,productor));
+        else dlCos(canvas,productor);
+        btn.textContent='📸 Generar imagen';btn.disabled=false;
+      },'image/png');
+    });
+  },150);
+}
+
+function dlCos(canvas,productor){
+  const a=document.createElement('a');
+  a.download=`cosecha-afa-${productor.replace(/[\s,]/g,'-').toLowerCase()}.png`;
+  a.href=canvas.toDataURL('image/png');a.click();
+  toast('✓ Imagen generada');
 }
 
 // ══ INIT ══
