@@ -508,7 +508,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <!-- Footer -->
     <div style="margin-top:14px;padding-top:10px;border-top:1px solid rgba(245,158,11,.2);display:flex;align-items:center;justify-content:space-between;">
       <div style="font-size:10px;color:rgba(255,255,255,.3);font-family:'Barlow',sans-serif;">📅 Generado el <span id="cosCardFecha"></span></div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;color:rgba(245,158,11,.5);">AFA · ASOCIACIÓN FEDERADA ARGENTINA</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;color:rgba(245,158,11,.5);">AFA · AGRICULTORES FEDERADOS ARGENTINOS</div>
     </div>
   </div>
 </div>
@@ -1456,8 +1456,6 @@ function initCosecha(){
   // Agregar 3 filas por defecto
   if(document.getElementById('cosRows')&&document.getElementById('cosRows').children.length===0){
     addCosRow('26','Maíz','','','');
-    addCosRow('26','Soja','','','');
-    addCosRow('26','Girasol','','','');
   }
 }
 
@@ -1492,8 +1490,8 @@ function generarImagenCosecha(){
   const productor=document.getElementById('cosProducer').value;
   const campana=document.getElementById('cosCampana').value;
   if(!productor){toast('Seleccioná un productor');return;}
-  const rows=getCosRows();
-  if(!rows.length){toast('Agregá al menos un cultivo');return;}
+  const rows=getCosRows().filter(r=>r.entregados||r.certificados||r.disponibles);
+  if(!rows.length){toast('Agregá datos en al menos un cultivo');return;}
 
   // Llenar tarjeta
   document.getElementById('cosCardProducer').textContent=productor.toUpperCase();
