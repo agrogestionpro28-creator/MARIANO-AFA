@@ -260,6 +260,9 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <button class="hn" id="nav-objetivos" onclick="showView('objetivos',this)">🎯 Objetivos</button>
     <button class="hn" id="nav-ventas" onclick="showView('ventas',this)">📊 Ventas</button>
     <button class="hn" id="nav-agenda" onclick="showView('agenda',this)">📌 Agenda</button>
+    <button class="hn" id="nav-alertas" onclick="showAlertas()" style="position:relative;">
+      🔔 <span id="alertaBell" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:white;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;" id="alertaCount">0</span>
+    </button>
     <a href="index.html" class="hn back">💰 Precios →</a>
   </div>
 </header>
@@ -294,6 +297,54 @@ tr:hover td{background:rgba(255,255,255,.02);}
     </table>
   </div>
 </div>
+
+<!-- FICHA CLIENTE -->
+<div id="v-ficha" class="view">
+  <div class="sec-title">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="btn btn-secondary btn-sm" onclick="showView('clientes',document.getElementById('nav-clientes'))">← Volver</button>
+      <h2 id="fichaTitle">Ficha del Cliente</h2>
+    </div>
+    <div class="sec-actions">
+      <button class="btn btn-secondary btn-sm" id="fichaEditBtn" onclick="">✏️ Editar datos</button>
+    </div>
+  </div>
+
+  <!-- STATS FICHA -->
+  <div class="cards-row" id="fichaStats"></div>
+
+  <!-- GRID -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+
+    <!-- HAS POR CULTIVO -->
+    <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-top:1px solid var(--border2);border-radius:14px;padding:18px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
+      <div class="sec-lbl" style="margin-bottom:12px;">🌾 Hectáreas por cultivo</div>
+      <div id="fichaHas"></div>
+    </div>
+
+    <!-- COBERTURA COSECHA -->
+    <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-top:1px solid var(--border2);border-radius:14px;padding:18px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
+      <div class="sec-lbl" style="margin-bottom:12px;">🛡️ Cobertura a cosecha</div>
+      <div id="fichaCob"></div>
+    </div>
+  </div>
+
+  <!-- NOTAS DEL CLIENTE -->
+  <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-top:1px solid var(--border2);border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div class="sec-lbl" style="margin-bottom:0;">📌 Notas del cliente</div>
+      <button class="btn btn-secondary btn-sm" onclick="openNotaClienteModal()">+ Nota</button>
+    </div>
+    <div id="fichaNotas"></div>
+  </div>
+
+  <!-- PEDIDOS DEL CLIENTE -->
+  <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-top:1px solid var(--border2);border-radius:14px;padding:18px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
+    <div class="sec-lbl" style="margin-bottom:12px;">📋 Pedidos de la campaña</div>
+    <div id="fichaPedidos"></div>
+  </div>
+</div>
+
 
 <!-- PEDIDOS -->
 <div id="v-pedidos" class="view">
@@ -619,8 +670,29 @@ tr:hover td{background:rgba(255,255,255,.02);}
   </div>
 </div>
 
-<!-- MODAL NOTA -->
-<div class="modal-bg" id="modalNota">
+<!-- MODAL ALERTAS COSECHA -->
+<div class="modal-bg" id="modalAlertasCosecha">
+  <div class="modal" style="max-width:600px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h2>🔔 Alertas de Cosecha</h2>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modalAlertasCosecha')">✕</button>
+    </div>
+    <div id="alertasCosechaContent"></div>
+  </div>
+</div>
+
+<!-- MODAL NOTA CLIENTE -->
+<div class="modal-bg" id="modalNotaCliente">
+  <div class="modal">
+    <h2>📌 Nota del cliente</h2>
+    <div class="fg"><label>Nota</label><textarea id="notaClienteTexto" placeholder="Observación, acuerdo, recordatorio..." rows="4"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalNotaCliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNotaCliente()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
   <div class="modal">
     <h2>Nueva Nota</h2>
     <div class="fg"><label>Nota</label><textarea id="notaTexto" placeholder="Escribí tu nota..." rows="5"></textarea></div>
@@ -773,7 +845,10 @@ function renderClientes(){
       <td class="td-num">${n(c.has_soja)}</td><td class="td-num">${n(c.has_soja2)}</td>
       <td class="td-num">${n(c.has_maiz2)}</td><td class="td-num">${n(c.has_sorgo2)}</td>
       <td class="td-num">${n(c.has_otros)}</td>
-      <td><div class="td-actions"><button class="btn btn-secondary btn-sm" onclick="openClienteModal('${c.id}')">✏️</button></div></td>
+      <td><div class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="abrirFicha('${c.id}')">👁 Ficha</button>
+        <button class="btn btn-secondary btn-sm" onclick="openClienteModal('${c.id}')">✏️</button>
+      </div></td>
     </tr>`;
   }).join('');
 }
@@ -1536,9 +1611,196 @@ function dlCos(canvas,productor){
   toast('✓ Imagen generada');
 }
 
+// ══ ALERTAS COSECHA (20 días) ══
+const VENC_PAGO={
+  'U$S Dic (trigo)':{mes:12,dia:20},
+  'U$S Feb (girasol)':{mes:2,dia:20},
+  'U$S Abr (maíz/sorgo)':{mes:4,dia:20},
+  'U$S May (soja)':{mes:5,dia:20},
+  'U$S Jul (maíz 2da)':{mes:7,dia:20},
+};
+
+function getVencimiento(formaPago){
+  const v=VENC_PAGO[formaPago];if(!v)return null;
+  const now=new Date();
+  let año=now.getFullYear();
+  // Si el mes ya pasó este año, es el año que viene
+  const fecha=new Date(año,v.mes-1,v.dia);
+  if(fecha<now)return new Date(año+1,v.mes-1,v.dia);
+  return fecha;
+}
+
+function checkAlertasCosecha(){
+  const now=new Date();
+  const limite=new Date(now.getTime()+20*24*60*60*1000);
+  const alertas=[];
+
+  // Agrupar por productor+pago
+  const cobProd={};
+  pedidos.filter(p=>isCosecha(p.forma_pago)&&p.cliente).forEach(p=>{
+    const key=p.cliente+'__'+p.forma_pago;
+    if(!cobProd[key])cobProd[key]={cliente:p.cliente,pago:p.forma_pago,seguro:p.seguro,forward:p.forward};
+    else{if(p.seguro==='si')cobProd[key].seguro='si';if(p.forward==='si')cobProd[key].forward='si';}
+  });
+
+  Object.values(cobProd).forEach(c=>{
+    const venc=getVencimiento(c.pago);
+    if(!venc)return;
+    const diasRestantes=Math.ceil((venc-now)/(24*60*60*1000));
+    if(diasRestantes<=20&&diasRestantes>=0){
+      const faltan=[];
+      if(c.seguro!=='si')faltan.push('seguro');
+      if(c.forward!=='si')faltan.push('forward');
+      if(faltan.length>0){
+        alertas.push({cliente:c.cliente,pago:c.pago,venc,diasRestantes,faltan});
+      }
+    }
+  });
+
+  // Actualizar bell
+  const bell=document.getElementById('alertaBell');
+  const count=document.getElementById('alertaCount');
+  if(alertas.length>0){
+    bell.style.display='flex';
+    count.textContent=alertas.length;
+    document.getElementById('nav-alertas').style.background='rgba(239,68,68,.2)';
+    document.getElementById('nav-alertas').style.borderColor='rgba(239,68,68,.4)';
+  } else {
+    bell.style.display='none';
+    document.getElementById('nav-alertas').style.background='';
+    document.getElementById('nav-alertas').style.borderColor='';
+  }
+  window._alertasCosecha=alertas;
+}
+
+function showAlertas(){
+  checkAlertasCosecha();
+  const alertas=window._alertasCosecha||[];
+  if(!alertas.length){
+    toast('✅ Sin alertas de cosecha en los próximos 20 días');return;
+  }
+  const content=alertas.sort((a,b)=>a.diasRestantes-b.diasRestantes).map(a=>{
+    const urgente=a.diasRestantes<=5;
+    const color=urgente?'#f87171':'var(--gold)';
+    return`<div style="padding:12px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:4px;">
+        <div style="font-weight:700;color:white;font-size:15px;">👤 ${a.cliente}</div>
+        <span style="background:${urgente?'rgba(239,68,68,.15)':'rgba(245,158,11,.12)'};border:1px solid ${urgente?'rgba(239,68,68,.3)':'rgba(245,158,11,.25)'};color:${color};padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700;">
+          ${a.diasRestantes===0?'¡Vence HOY!':a.diasRestantes===1?'¡Mañana!':a.diasRestantes+' días'}
+        </span>
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,.5);">${a.pago} · vence ${a.venc.toLocaleDateString('es-AR',{day:'2-digit',month:'long'})}</div>
+      <div style="font-size:12px;color:${color};margin-top:3px;">⚠️ Falta: <strong>${a.faltan.join(' y ')}</strong></div>
+    </div>`;
+  }).join('');
+  document.getElementById('alertasCosechaContent').innerHTML=`<div style="max-height:400px;overflow-y:auto;">${content}</div>`;
+  document.getElementById('modalAlertasCosecha').classList.add('open');
+}
+
+// ══ FICHA CLIENTE ══
+let fichaClienteId=null;
+let notasCliente=[];
+
+function abrirFicha(id){
+  fichaClienteId=id;
+  const c=clientes.find(x=>x.id===id);if(!c)return;
+
+  // Activar vista
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.hn').forEach(x=>x.classList.remove('active'));
+  document.getElementById('v-ficha').classList.add('active');
+  document.getElementById('fichaTitle').textContent=c.nombre;
+  document.getElementById('fichaEditBtn').onclick=()=>openClienteModal(id);
+
+  // Stats
+  const pedsCli=pedidos.filter(p=>p.cliente===c.nombre);
+  const totalKg=pedsCli.reduce((s,p)=>{const items=p.items?JSON.parse(p.items):[];return s+items.reduce((ss,i)=>ss+(+i.cant||0),0);},0);
+  document.getElementById('fichaStats').innerHTML=`
+    <div class="card-stat"><div class="cs-label">Has totales</div><div class="cs-val">${fmt(c.has_total)||'—'}</div></div>
+    <div class="card-stat"><div class="cs-label">Pedidos campaña</div><div class="cs-val">${pedsCli.length}</div></div>
+    <div class="card-stat"><div class="cs-label">Total comprado</div><div class="cs-val" style="font-size:20px;">${fmtN(totalKg)}</div><div class="cs-sub">unidades</div></div>
+    <div class="card-stat"><div class="cs-label">Estado</div><div class="cs-val" style="font-size:16px;">${c.socio==='si'?'<span style="color:#4ade80">Socio</span>':'<span style="color:#f87171">No socio</span>'}</div></div>
+  `;
+
+  // Has por cultivo
+  const cultivos=[{k:'has_trigo',l:'Trigo'},{k:'has_girasol',l:'Girasol'},{k:'has_maiz',l:'Maíz'},{k:'has_sorgo',l:'Sorgo'},{k:'has_soja',l:'Soja 1'},{k:'has_soja2',l:'Soja 2'},{k:'has_maiz2',l:'Maíz 2'},{k:'has_sorgo2',l:'Sorgo 2'},{k:'has_otros',l:'Otros'}];
+  const hasRows=cultivos.filter(cv=>+c[cv.k]>0).map(cv=>`
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:13px;color:rgba(255,255,255,.6);">${cv.l}</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:var(--g);">${fmt(c[cv.k])} has</span>
+    </div>`).join('');
+  document.getElementById('fichaHas').innerHTML=hasRows||`<div style="color:rgba(255,255,255,.2);font-size:13px;">Sin hectáreas cargadas</div>`;
+
+  // Cobertura cosecha
+  const cults=getCultivosACosecha(c.nombre);
+  if(cults.length){
+    document.getElementById('fichaCob').innerHTML=cults.map(cult=>{
+      const cob=getCobertura(c.id,cult);
+      const seg=cob?.seguro==='si',fwd=cob?.forward==='si';
+      const pago=Object.entries(PAGO_CULTIVO).find(([,v])=>v===cult)?.[0]||'';
+      const venc=getVencimiento(pago);
+      const dias=venc?Math.ceil((venc-new Date())/(24*60*60*1000)):null;
+      return`<div style="padding:10px 0;border-bottom:1px solid var(--border);">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:white;margin-bottom:6px;">${cult}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <span onclick="toggleCobertura2('${c.id}','${cult}','seguro')" style="cursor:pointer;" class="badge ${seg?'badge-blue':'badge-red'}">${seg?'🛡️ Seguro':'🔴 Sin seguro'}</span>
+          <span onclick="toggleCobertura2('${c.id}','${cult}','forward')" style="cursor:pointer;" class="badge ${fwd?'badge-blue':'badge-red'}">${fwd?'📊 Forward':'🔴 Sin forward'}</span>
+          ${venc?`<span style="font-size:11px;color:${dias<=20?'var(--gold)':'rgba(255,255,255,.3)'};">Vence ${venc.toLocaleDateString('es-AR',{day:'2-digit',month:'long'})}${dias<=20?' ('+dias+' días)':''}</span>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    document.getElementById('fichaCob').innerHTML=`<div style="color:rgba(255,255,255,.2);font-size:13px;">Sin pedidos a cosecha</div>`;
+  }
+
+  // Pedidos del cliente
+  const pedList=pedsCli.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  document.getElementById('fichaPedidos').innerHTML=pedList.length?pedList.map(p=>renderPedCard(p)).join(''):`<div style="color:rgba(255,255,255,.2);font-size:13px;">Sin pedidos en esta campaña</div>`;
+
+  // Notas del cliente
+  loadNotasCliente(id);
+}
+
+async function loadNotasCliente(clienteId){
+  try{notasCliente=await sb(`/rest/v1/afa_notas_cliente?select=*&cliente_id=eq.${clienteId}&order=created_at.desc`);}
+  catch(e){notasCliente=[];}
+  renderNotasCliente();
+}
+
+function renderNotasCliente(){
+  const el=document.getElementById('fichaNotas');
+  if(!notasCliente.length){el.innerHTML=`<div style="color:rgba(255,255,255,.2);font-size:13px;">Sin notas aún</div>`;return;}
+  el.innerHTML=notasCliente.map(n=>`<div style="padding:10px 0;border-bottom:1px solid var(--border);">
+    <div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:3px;">📅 ${new Date(n.created_at).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})}</div>
+    <div style="font-size:14px;color:rgba(255,255,255,.8);white-space:pre-wrap;">${n.texto}</div>
+    <button onclick="deleteNotaCliente('${n.id}')" style="margin-top:5px;background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2);border-radius:5px;padding:2px 8px;cursor:pointer;font-size:11px;">🗑 Eliminar</button>
+  </div>`).join('');
+}
+
+function openNotaClienteModal(){document.getElementById('notaClienteTexto').value='';document.getElementById('modalNotaCliente').classList.add('open');setTimeout(()=>document.getElementById('notaClienteTexto').focus(),100);}
+
+async function saveNotaCliente(){
+  const texto=document.getElementById('notaClienteTexto').value.trim();
+  if(!texto||!fichaClienteId){toast('Escribí algo');return;}
+  try{
+    const r=await sb('/rest/v1/afa_notas_cliente',{method:'POST',body:JSON.stringify({cliente_id:fichaClienteId,texto,created_at:new Date().toISOString()})});
+    if(r&&r[0])notasCliente.unshift(r[0]);
+    closeModal('modalNotaCliente');renderNotasCliente();toast('✓ Nota guardada');
+  }catch(e){toast('Error al guardar');}
+}
+
+async function deleteNotaCliente(id){
+  if(!confirm('¿Eliminar nota?'))return;
+  await sb(`/rest/v1/afa_notas_cliente?id=eq.${id}`,{method:'DELETE'});
+  notasCliente=notasCliente.filter(x=>x.id!==id);renderNotasCliente();toast('Nota eliminada');
+}
+
 // ══ INIT ══
 async function init(){
   await Promise.all([loadClientes(),loadPedidos(),loadObjetivos(),loadNotas(),loadPreciosCache()]);
+  checkAlertasCosecha();
+  // Chequear alertas cada 30 minutos
+  setInterval(checkAlertasCosecha,30*60*1000);
 }
 init();
 </script>
