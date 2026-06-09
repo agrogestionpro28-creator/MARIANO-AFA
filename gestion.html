@@ -260,6 +260,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <button class="hn" id="nav-objetivos" onclick="showView('objetivos',this)">🎯 Objetivos</button>
     <button class="hn" id="nav-ventas" onclick="showView('ventas',this)">📊 Ventas</button>
     <button class="hn" id="nav-graficos" onclick="showView('graficos',this)">📈 Gráficos</button>
+    <button class="hn" id="nav-condiciones" onclick="showView('condiciones',this)">📋 Condiciones</button>
     <button class="hn" id="nav-agenda" onclick="showView('agenda',this)">📌 Agenda</button>
     <button class="hn" id="nav-alertas" onclick="showAlertas()" style="position:relative;">
       🔔 <span id="alertaBell" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:white;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;" id="alertaCount">0</span>
@@ -510,6 +511,70 @@ tr:hover td{background:rgba(255,255,255,.02);}
   <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-top:1px solid var(--border2);border-radius:14px;padding:18px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
     <div class="sec-lbl" style="margin-bottom:14px;">Evolución de pedidos por mes</div>
     <canvas id="grafEvolucion" height="100"></canvas>
+  </div>
+</div>
+
+<!-- CONDICIONES COMERCIALES -->
+<div id="v-condiciones" class="view">
+  <div class="sec-title">
+    <div><h2>📋 Condiciones Comerciales</h2><p>Campaña 2026/2027 · Gastos de comercialización AFA</p></div>
+  </div>
+
+  <!-- TABS DE CULTIVOS -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;" id="condTabs"></div>
+
+  <!-- CONTENIDO -->
+  <div id="condContent"></div>
+</div>
+
+<!-- MODAL EDITAR CONDICIONES -->
+<div class="modal-bg" id="modalCondiciones">
+  <div class="modal" style="max-width:680px;max-height:90vh;overflow-y:auto;">
+    <h2 id="condModalTitle">Editar Condiciones</h2>
+
+    <div class="sect-divider">General</div>
+    <div class="fg-row">
+      <div class="fg"><label>Paritaria ($)</label><input type="number" id="condParitaria" placeholder="3900"></div>
+      <div class="fg"><label>Comisión (%)</label><input type="number" id="condComision" step="0.01" placeholder="2.00"></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Flete a puerto ($ x TT)</label><input type="number" id="condFlete" placeholder="20300"></div>
+      <div class="fg"><label>Cond. de pago (días hábiles)</label><input type="number" id="condPago" placeholder="6"></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Comisión directo a puerto (%)</label><input type="number" id="condComisionDirecto" step="0.01" placeholder="1.50"></div>
+      <div class="fg"><label>Fumigación bonificada</label>
+        <select id="condFumigacion">
+          <option value="si">✅ Sí — 100%</option>
+          <option value="no">❌ No</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sect-divider">Secado</div>
+    <div class="fg-row">
+      <div class="fg"><label>Sin costo desde (% humedad)</label><input type="number" id="condSecadoDesde" step="0.1" placeholder="14.0"></div>
+      <div class="fg"><label>Sin costo hasta (% humedad)</label><input type="number" id="condSecadoHasta" step="0.1" placeholder="15.0"></div>
+    </div>
+    <div class="fg" style="margin-bottom:4px;"><label>Rangos con costo (ej: "15.1-15.5: $2400 x TT cada 1/2 punto")</label></div>
+    <div id="condSecadoRangos"></div>
+    <button class="btn btn-secondary btn-sm" onclick="addSecadoRango()" style="margin-bottom:12px;">+ Agregar rango</button>
+
+    <div class="sect-divider">Acarreo ($ x TT)</div>
+    <div id="condAcarreoRangos"></div>
+    <button class="btn btn-secondary btn-sm" onclick="addAcarreoRango()">+ Agregar rango</button>
+
+    <div class="sect-divider">Almacenaje</div>
+    <div class="fg-row">
+      <div class="fg"><label>Días libres</label><input type="number" id="condAlmDias" placeholder="120"></div>
+      <div class="fg"><label>% mensual después</label><input type="number" id="condAlmPct" step="0.01" placeholder="0.60"></div>
+    </div>
+    <div class="fg"><label>Hasta (días)</label><input type="number" id="condAlmHasta" placeholder="365"></div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalCondiciones')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCondicion()">✓ Guardar</button>
+    </div>
   </div>
 </div>
 
@@ -800,6 +865,7 @@ function showView(v,btn){
   if(v==='agenda'){renderNotas();initCosecha();}
   if(v==='ventas'){renderVentas();if(graficosVisible)renderGraficos();}
   if(v==='graficos')renderGraficosPanel();
+  if(v==='condiciones')renderCondiciones();
 }
 
 // ══ MAPEO ══
@@ -1995,9 +2061,227 @@ function renderGraficosPanel(){
   });
 }
 
+// ══ CONDICIONES COMERCIALES ══
+const CULTIVOS_COND=['Trigo','Girasol','Maíz','Sorgo','Soja','Maíz 2º'];
+let condiciones={};
+let condActivoCultivo='Trigo';
+let editingCond=null;
+
+async function loadCondiciones(){
+  try{
+    const data=await sb('/rest/v1/afa_condiciones?select=*');
+    condiciones={};
+    data.forEach(c=>condiciones[c.cultivo]=c);
+  }catch(e){condiciones={};}
+}
+
+function renderCondiciones(){
+  // Tabs
+  document.getElementById('condTabs').innerHTML=CULTIVOS_COND.map(c=>`
+    <button onclick="selCondCultivo('${c}')" style="
+      padding:9px 18px;border-radius:9px;border:none;cursor:pointer;transition:all .2s;
+      font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;
+      ${condActivoCultivo===c?'background:var(--gold);color:#0a0a0a;box-shadow:0 2px 10px rgba(245,158,11,.3);':'background:var(--bg4);color:rgba(255,255,255,.5);border:1px solid var(--border2);'}
+    ">${c}</button>`).join('');
+
+  // Contenido del cultivo activo
+  const c=condiciones[condActivoCultivo];
+  const fmtPeso=n=>n?'$ '+Number(n).toLocaleString('es-AR',{minimumFractionDigits:0}):'—';
+  const fmtPct=n=>n!=null?Number(n).toFixed(2)+'%':'—';
+
+  let secadoRangos='Sin rangos adicionales';
+  if(c?.secado_rangos){
+    try{
+      const r=JSON.parse(c.secado_rangos);
+      if(r.length)secadoRangos=r.map(x=>`<div style="padding:4px 0;font-size:13px;color:rgba(255,255,255,.7);">• ${x.rango}: <strong>${fmtPeso(x.costo)}</strong> x TT ${x.obs||''}</div>`).join('');
+    }catch(e){}
+  }
+
+  let acarreoRangos='Sin rangos cargados';
+  if(c?.acarreo_rangos){
+    try{
+      const r=JSON.parse(c.acarreo_rangos);
+      if(r.length)acarreoRangos=`<table style="width:100%;border-collapse:collapse;">
+        <thead><tr>
+          <th style="text-align:left;padding:6px 10px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.3);border-bottom:1px solid var(--border);">KM</th>
+          <th style="text-align:right;padding:6px 10px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.3);border-bottom:1px solid var(--border);">$ x TT</th>
+        </tr></thead>
+        <tbody>${r.map((x,i)=>`<tr style="background:${i%2===0?'rgba(255,255,255,.02)':'transparent'};">
+          <td style="padding:8px 10px;font-size:14px;color:rgba(255,255,255,.7);">De ${x.desde} a ${x.hasta} km</td>
+          <td style="padding:8px 10px;text-align:right;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:var(--gold);">${fmtPeso(x.costo)}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+    }catch(e){}
+  }
+
+  const bloque=(titulo,contenido)=>`
+    <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-top:1px solid var(--border2);border-radius:14px;padding:16px 20px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">${titulo}</div>
+      ${contenido}
+    </div>`;
+
+  const val=(label,v)=>`<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+    <span style="font-size:13px;color:rgba(255,255,255,.5);">${label}</span>
+    <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;color:white;">${v}</span>
+  </div>`;
+
+  if(!c){
+    document.getElementById('condContent').innerHTML=`
+      <div style="text-align:center;padding:40px 20px;color:rgba(255,255,255,.2);">
+        <div style="font-size:36px;margin-bottom:10px;">📋</div>
+        <p style="margin-bottom:16px;">Sin condiciones cargadas para ${condActivoCultivo}</p>
+        <button class="btn btn-primary" onclick="openCondModal('${condActivoCultivo}')">+ Cargar condiciones</button>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('condContent').innerHTML=`
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+      <button class="btn btn-primary btn-sm" onclick="openCondModal('${condActivoCultivo}')">✏️ Editar ${condActivoCultivo}</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
+      ${bloque('💰 General',
+        val('Paritaria',fmtPeso(c.paritaria))+
+        val('Comisión',fmtPct(c.comision))+
+        val('Flete a Puerto',fmtPeso(c.flete_puerto))+
+        val('Cond. de Pago',c.cond_pago_dias?c.cond_pago_dias+' días hábiles':'—')+
+        val('Comisión directo puerto',fmtPct(c.comision_directo_puerto))+
+        val('Fumigación bonificada',c.fumigacion_bonificada?'✅ Sí 100%':'❌ No')
+      )}
+      ${bloque('💧 Secado',
+        val('Sin costo',`${c.secado_libre_desde||14},0 a ${c.secado_libre_hasta||15},0 c/merma`)+
+        `<div style="margin-top:8px;">${secadoRangos}</div>`
+      )}
+      ${bloque('🏠 Almacenaje',
+        val('Días libres',c.almacenaje_dias_libres||120)+
+        val('% mensual después',(c.almacenaje_pct_mensual||0.60).toFixed(2)+'%')+
+        val('Hasta',c.almacenaje_hasta_dias||365+' días')
+      )}
+    </div>
+    <div style="margin-top:12px;">
+      ${bloque('🚛 Acarreo ($ x TT)',acarreoRangos)}
+    </div>`;
+}
+
+function selCondCultivo(cultivo){
+  condActivoCultivo=cultivo;
+  renderCondiciones();
+}
+
+function openCondModal(cultivo){
+  editingCond=cultivo;
+  const c=condiciones[cultivo]||{};
+  document.getElementById('condModalTitle').textContent=`Editar — ${cultivo}`;
+  document.getElementById('condParitaria').value=c.paritaria||'';
+  document.getElementById('condComision').value=c.comision||'';
+  document.getElementById('condFlete').value=c.flete_puerto||'';
+  document.getElementById('condPago').value=c.cond_pago_dias||'';
+  document.getElementById('condComisionDirecto').value=c.comision_directo_puerto||'';
+  document.getElementById('condFumigacion').value=c.fumigacion_bonificada?'si':'no';
+  document.getElementById('condSecadoDesde').value=c.secado_libre_desde||14;
+  document.getElementById('condSecadoHasta').value=c.secado_libre_hasta||15;
+  document.getElementById('condAlmDias').value=c.almacenaje_dias_libres||120;
+  document.getElementById('condAlmPct').value=c.almacenaje_pct_mensual||0.60;
+  document.getElementById('condAlmHasta').value=c.almacenaje_hasta_dias||365;
+
+  // Rangos secado
+  document.getElementById('condSecadoRangos').innerHTML='';
+  const secRangos=c.secado_rangos?JSON.parse(c.secado_rangos):[];
+  secRangos.forEach(r=>addSecadoRango(r.rango,r.costo,r.obs));
+
+  // Rangos acarreo
+  document.getElementById('condAcarreoRangos').innerHTML='';
+  const acRangos=c.acarreo_rangos?JSON.parse(c.acarreo_rangos):[];
+  if(acRangos.length)acRangos.forEach(r=>addAcarreoRango(r.desde,r.hasta,r.costo));
+  else{
+    // Cargar defaults de Trigo si está vacío
+    [[10,15,4511],[20,30,5575],[35,45,6859],[50,60,7970],[65,75,8993],[80,90,10127],[95,105,11336]]
+      .forEach(([d,h,c])=>addAcarreoRango(d,h,c));
+  }
+
+  document.getElementById('modalCondiciones').classList.add('open');
+}
+
+let secRangoCount=0,acRangoCount=0;
+
+function addSecadoRango(rango='',costo='',obs=''){
+  secRangoCount++;
+  const n=secRangoCount;
+  const div=document.createElement('div');
+  div.id=`secr_${n}`;
+  div.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;margin-bottom:6px;';
+  const inp=s=>`style="padding:7px 9px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;color:white;width:100%;"`;
+  div.innerHTML=`
+    <input placeholder="Rango ej: 15.1-15.5" value="${rango}" ${inp()}>
+    <input type="number" placeholder="$ costo" value="${costo}" ${inp()}>
+    <input placeholder="Obs ej: cada 1/2 punto" value="${obs}" ${inp()}>
+    <button onclick="document.getElementById('secr_${n}').remove()" style="background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.25);border-radius:7px;width:28px;height:28px;cursor:pointer;">✕</button>`;
+  document.getElementById('condSecadoRangos').appendChild(div);
+}
+
+function addAcarreoRango(desde='',hasta='',costo=''){
+  acRangoCount++;
+  const n=acRangoCount;
+  const div=document.createElement('div');
+  div.id=`acr_${n}`;
+  div.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;margin-bottom:6px;align-items:center;';
+  const inp=`style="padding:7px 9px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;color:white;width:100%;"`;
+  div.innerHTML=`
+    <input type="number" placeholder="Desde km" value="${desde}" ${inp}>
+    <input type="number" placeholder="Hasta km" value="${hasta}" ${inp}>
+    <input type="number" placeholder="$ x TT" value="${costo}" ${inp}>
+    <button onclick="document.getElementById('acr_${n}').remove()" style="background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.25);border-radius:7px;width:28px;height:28px;cursor:pointer;">✕</button>`;
+  document.getElementById('condAcarreoRangos').appendChild(div);
+}
+
+async function saveCondicion(){
+  if(!editingCond)return;
+  // Recolectar rangos secado
+  const secRangos=[...document.getElementById('condSecadoRangos').children].map(div=>{
+    const ins=div.querySelectorAll('input');
+    return{rango:ins[0].value.trim(),costo:+ins[1].value||0,obs:ins[2].value.trim()};
+  }).filter(r=>r.rango);
+
+  // Recolectar rangos acarreo
+  const acRangos=[...document.getElementById('condAcarreoRangos').children].map(div=>{
+    const ins=div.querySelectorAll('input');
+    return{desde:+ins[0].value||0,hasta:+ins[1].value||0,costo:+ins[2].value||0};
+  }).filter(r=>r.desde&&r.hasta);
+
+  const obj={
+    cultivo:editingCond,campana:'2026/2027',
+    paritaria:+document.getElementById('condParitaria').value||0,
+    comision:+document.getElementById('condComision').value||0,
+    flete_puerto:+document.getElementById('condFlete').value||0,
+    cond_pago_dias:+document.getElementById('condPago').value||6,
+    comision_directo_puerto:+document.getElementById('condComisionDirecto').value||0,
+    fumigacion_bonificada:document.getElementById('condFumigacion').value==='si',
+    secado_libre_desde:+document.getElementById('condSecadoDesde').value||14,
+    secado_libre_hasta:+document.getElementById('condSecadoHasta').value||15,
+    secado_rangos:JSON.stringify(secRangos),
+    acarreo_rangos:JSON.stringify(acRangos),
+    almacenaje_dias_libres:+document.getElementById('condAlmDias').value||120,
+    almacenaje_pct_mensual:+document.getElementById('condAlmPct').value||0.60,
+    almacenaje_hasta_dias:+document.getElementById('condAlmHasta').value||365,
+    updated_at:new Date().toISOString()
+  };
+
+  try{
+    const existe=condiciones[editingCond];
+    if(existe){
+      await sb(`/rest/v1/afa_condiciones?cultivo=eq.${encodeURIComponent(editingCond)}`,{method:'PATCH',body:JSON.stringify(obj)});
+      condiciones[editingCond]={...condiciones[editingCond],...obj};
+    } else {
+      const r=await sb('/rest/v1/afa_condiciones',{method:'POST',body:JSON.stringify(obj)});
+      if(r&&r[0])condiciones[editingCond]=r[0];
+    }
+    closeModal('modalCondiciones');renderCondiciones();toast('✓ Condiciones guardadas');
+  }catch(e){toast('Error: '+e.message);}
+}
+
 // ══ INIT ══
 async function init(){
-  await Promise.all([loadClientes(),loadPedidos(),loadObjetivos(),loadNotas(),loadPreciosCache()]);
+  await Promise.all([loadClientes(),loadPedidos(),loadObjetivos(),loadNotas(),loadPreciosCache(),loadCondiciones()]);
   checkAlertasCosecha();
   setInterval(checkAlertasCosecha,30*60*1000);
   // Si viene con #graficos desde precios, abrir directo
