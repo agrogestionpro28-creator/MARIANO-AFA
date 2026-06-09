@@ -259,6 +259,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <button class="hn" id="nav-pedidos" onclick="showView('pedidos',this)">📋 Pedidos</button>
     <button class="hn" id="nav-objetivos" onclick="showView('objetivos',this)">🎯 Objetivos</button>
     <button class="hn" id="nav-ventas" onclick="showView('ventas',this)">📊 Ventas</button>
+    <button class="hn" id="nav-graficos" onclick="showView('graficos',this)">📈 Gráficos</button>
     <button class="hn" id="nav-agenda" onclick="showView('agenda',this)">📌 Agenda</button>
     <button class="hn" id="nav-alertas" onclick="showAlertas()" style="position:relative;">
       🔔 <span id="alertaBell" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:white;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;" id="alertaCount">0</span>
@@ -467,6 +468,49 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <button class="btn btn-secondary btn-sm" onclick="clearVentasFiltros()">✕ Limpiar</button>
   </div>
   <div id="ventasList"></div>
+</div>
+
+<!-- GRÁFICOS -->
+<div id="v-graficos" class="view">
+  <div class="sec-title">
+    <div><h2>📈 Resultados</h2><p>Campaña 2026/2027</p></div>
+    <div class="sec-actions">
+      <button class="btn btn-secondary btn-sm" onclick="renderGraficosPanel()">🔄 Actualizar</button>
+    </div>
+  </div>
+
+  <!-- CARDS RESUMEN -->
+  <div class="cards-row" id="grafStats"></div>
+
+  <!-- FILA 1: Ventas vs Objetivos + Forma de pago -->
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px;">
+    <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-top:1px solid var(--border2);border-radius:14px;padding:18px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
+      <div class="sec-lbl" style="margin-bottom:14px;">Ventas vs Objetivos</div>
+      <canvas id="grafVsObj" height="280"></canvas>
+    </div>
+    <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-top:1px solid var(--border2);border-radius:14px;padding:18px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
+      <div class="sec-lbl" style="margin-bottom:14px;">Por forma de pago</div>
+      <canvas id="grafPago" height="280"></canvas>
+    </div>
+  </div>
+
+  <!-- FILA 2: Top clientes + Cobertura -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+    <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-top:1px solid var(--border2);border-radius:14px;padding:18px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
+      <div class="sec-lbl" style="margin-bottom:14px;">Top 10 clientes por pedidos</div>
+      <canvas id="grafTopCli" height="300"></canvas>
+    </div>
+    <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-top:1px solid var(--border2);border-radius:14px;padding:18px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
+      <div class="sec-lbl" style="margin-bottom:14px;">Cobertura de la cartera</div>
+      <div id="grafCoberturaPanel"></div>
+    </div>
+  </div>
+
+  <!-- FILA 3: Evolución mensual -->
+  <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-top:1px solid var(--border2);border-radius:14px;padding:18px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
+    <div class="sec-lbl" style="margin-bottom:14px;">Evolución de pedidos por mes</div>
+    <canvas id="grafEvolucion" height="100"></canvas>
+  </div>
 </div>
 
 <!-- AGENDA -->
@@ -755,6 +799,7 @@ function showView(v,btn){
   if(v==='objetivos')renderObjetivos();
   if(v==='agenda'){renderNotas();initCosecha();}
   if(v==='ventas'){renderVentas();if(graficosVisible)renderGraficos();}
+  if(v==='graficos')renderGraficosPanel();
 }
 
 // ══ MAPEO ══
@@ -1795,12 +1840,153 @@ async function deleteNotaCliente(id){
   notasCliente=notasCliente.filter(x=>x.id!==id);renderNotasCliente();toast('Nota eliminada');
 }
 
+// ══ GRÁFICOS PANEL ══
+let grafVsObj=null,grafPago=null,grafTopCli=null,grafEvolucion=null;
+
+function renderGraficosPanel(){
+  const COLORS=['#2EAA6E','#f59e0b','#3b82f6','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#84cc16','#06b6d4'];
+  const gridColor='rgba(255,255,255,.06)';
+  const tickColor='rgba(255,255,255,.4)';
+  const chartOpts={responsive:true,plugins:{legend:{display:false}},scales:{
+    y:{beginAtZero:true,ticks:{color:tickColor,font:{size:10}},grid:{color:gridColor}},
+    x:{ticks:{color:tickColor,font:{size:10}},grid:{display:false}}}};
+
+  // ── STATS ──
+  const totalPedidos=pedidos.length;
+  const clientesConPedido=new Set(pedidos.map(p=>p.cliente)).size;
+  const pctObj=objetivos.length?Math.round(objetivos.reduce((s,o)=>{
+    const v=(+o.vendido_inicial||0)+calcVendidoPedidos(o.producto);
+    return s+(o.meta>0?v/o.meta*100:0);
+  },0)/objetivos.length):0;
+  const conCosecha=new Set(pedidos.filter(p=>isCosecha(p.forma_pago)).map(p=>p.cliente)).size;
+
+  document.getElementById('grafStats').innerHTML=`
+    <div class="card-stat"><div class="cs-label">Total pedidos</div><div class="cs-val">${totalPedidos}</div></div>
+    <div class="card-stat"><div class="cs-label">Clientes activos</div><div class="cs-val">${clientesConPedido}</div><div class="cs-sub">de ${clientes.length} totales</div></div>
+    <div class="card-stat"><div class="cs-label">Avg objetivos</div><div class="cs-val" style="color:${pctObj>=75?'#4ade80':pctObj>=25?'var(--gold)':'#f87171'}">${pctObj}%</div></div>
+    <div class="card-stat"><div class="cs-label">A cosecha</div><div class="cs-val" style="color:#60a5fa">${conCosecha}</div><div class="cs-sub">productores</div></div>
+  `;
+
+  // ── 1. VENTAS VS OBJETIVOS ──
+  const objData=objetivos.map(o=>{
+    const v=(+o.vendido_inicial||0)+calcVendidoPedidos(o.producto);
+    return{label:o.producto.length>12?o.producto.substring(0,12)+'...':o.producto,vendido:v,meta:o.meta,pct:o.meta>0?Math.min(v/o.meta*100,100):0};
+  }).sort((a,b)=>b.pct-a.pct);
+
+  if(grafVsObj)grafVsObj.destroy();
+  grafVsObj=new Chart(document.getElementById('grafVsObj').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:objData.map(o=>o.label),
+      datasets:[
+        {label:'Vendido %',data:objData.map(o=>o.pct),backgroundColor:objData.map(o=>o.pct>=75?'rgba(46,170,110,.8)':o.pct>=25?'rgba(245,158,11,.8)':'rgba(239,68,68,.8)'),borderRadius:4,borderSkipped:false},
+      ]
+    },
+    options:{...chartOpts,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const o=objData[ctx.dataIndex];return`${o.pct.toFixed(1)}% · ${Number(o.vendido).toLocaleString('es-AR')} / ${Number(o.meta).toLocaleString('es-AR')}`;}}}}
+    ,scales:{y:{beginAtZero:true,max:100,ticks:{color:tickColor,callback:v=>v+'%'},grid:{color:gridColor}},x:{ticks:{color:tickColor,font:{size:9}},grid:{display:false}}}}
+  });
+
+  // ── 2. FORMA DE PAGO ──
+  const pagoIdx={};
+  pedidos.forEach(p=>{const k=p.forma_pago||'Sin definir';pagoIdx[k]=(pagoIdx[k]||0)+1;});
+  if(grafPago)grafPago.destroy();
+  grafPago=new Chart(document.getElementById('grafPago').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:Object.keys(pagoIdx),datasets:[{data:Object.values(pagoIdx),backgroundColor:COLORS,borderWidth:2,borderColor:'#111'}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:tickColor,font:{size:10},boxWidth:12,padding:8}}}}
+  });
+
+  // ── 3. TOP CLIENTES ──
+  const cliIdx={};
+  pedidos.forEach(p=>{
+    if(!p.cliente)return;
+    if(!cliIdx[p.cliente])cliIdx[p.cliente]=0;
+    const items=p.items?JSON.parse(p.items):[];
+    cliIdx[p.cliente]+=items.reduce((s,i)=>s+(+i.cant||0),0);
+  });
+  const topCli=Object.entries(cliIdx).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  if(grafTopCli)grafTopCli.destroy();
+  grafTopCli=new Chart(document.getElementById('grafTopCli').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:topCli.map(([n])=>n.split(',')[0]),
+      datasets:[{label:'Unidades',data:topCli.map(([,v])=>v),backgroundColor:'rgba(46,170,110,.75)',borderRadius:4,borderSkipped:false}]
+    },
+    options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,ticks:{color:tickColor,font:{size:10}},grid:{color:gridColor}},
+        y:{ticks:{color:'rgba(255,255,255,.7)',font:{size:11}},grid:{display:false}}}}
+  });
+
+  // ── 4. COBERTURA CARTERA ──
+  const totalCli=clientes.length;
+  const conPedido=new Set(pedidos.map(p=>p.cliente)).size;
+  const conCosechaSet=new Set(pedidos.filter(p=>isCosecha(p.forma_pago)).map(p=>p.cliente));
+  const cobProd={};
+  pedidos.filter(p=>isCosecha(p.forma_pago)&&p.cliente).forEach(p=>{
+    if(!cobProd[p.cliente])cobProd[p.cliente]={seguro:'no',forward:'no'};
+    if(p.seguro==='si')cobProd[p.cliente].seguro='si';
+    if(p.forward==='si')cobProd[p.cliente].forward='si';
+  });
+  const conSeguro=Object.values(cobProd).filter(c=>c.seguro==='si').length;
+  const conForward=Object.values(cobProd).filter(c=>c.forward==='si').length;
+  const totalCosecha=conCosechaSet.size;
+
+  const pctPedido=totalCli>0?Math.round(conPedido/totalCli*100):0;
+  const pctSeguro=totalCosecha>0?Math.round(conSeguro/totalCosecha*100):0;
+  const pctForward=totalCosecha>0?Math.round(conForward/totalCosecha*100):0;
+
+  const cobItem=(label,val,total,pct,color)=>`
+    <div style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+        <span style="font-size:13px;color:rgba(255,255,255,.7);">${label}</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:${color};">${pct}%</span>
+      </div>
+      <div style="background:rgba(255,255,255,.06);border-radius:20px;height:8px;overflow:hidden;">
+        <div style="height:100%;border-radius:20px;background:${color};width:${pct}%;box-shadow:0 0 8px ${color};transition:width .5s;"></div>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:3px;">${val} de ${total} clientes</div>
+    </div>`;
+
+  document.getElementById('grafCoberturaPanel').innerHTML=
+    cobItem('Clientes con pedidos',conPedido,totalCli,pctPedido,'#2EAA6E')+
+    cobItem('Con seguro (a cosecha)',conSeguro,totalCosecha,pctSeguro,'#3b82f6')+
+    cobItem('Con forward (a cosecha)',conForward,totalCosecha,pctForward,'#f59e0b');
+
+  // ── 5. EVOLUCIÓN MENSUAL ──
+  const mesIdx={};
+  pedidos.forEach(p=>{
+    if(!p.fecha)return;
+    const k=p.fecha.substring(0,7);
+    mesIdx[k]=(mesIdx[k]||0)+1;
+  });
+  const meses=Object.keys(mesIdx).sort();
+  const mesesLabel=meses.map(m=>{
+    const [y,mo]=m.split('-');
+    const names=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return names[+mo-1]+' '+y.substring(2);
+  });
+  if(grafEvolucion)grafEvolucion.destroy();
+  grafEvolucion=new Chart(document.getElementById('grafEvolucion').getContext('2d'),{
+    type:'line',
+    data:{labels:mesesLabel,datasets:[{label:'Pedidos',data:meses.map(m=>mesIdx[m]),
+      borderColor:'#2EAA6E',backgroundColor:'rgba(46,170,110,.08)',
+      borderWidth:2,tension:.3,fill:true,pointBackgroundColor:'#2EAA6E',pointRadius:5,pointHoverRadius:7}]},
+    options:{responsive:true,plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true,ticks:{stepSize:1,color:tickColor},grid:{color:gridColor}},
+        x:{ticks:{color:tickColor,font:{size:11}},grid:{display:false}}}}
+  });
+}
+
 // ══ INIT ══
 async function init(){
   await Promise.all([loadClientes(),loadPedidos(),loadObjetivos(),loadNotas(),loadPreciosCache()]);
   checkAlertasCosecha();
-  // Chequear alertas cada 30 minutos
   setInterval(checkAlertasCosecha,30*60*1000);
+  // Si viene con #graficos desde precios, abrir directo
+  if(window.location.hash==='#graficos'){
+    const btn=document.getElementById('nav-graficos');
+    showView('graficos',btn);
+  }
 }
 init();
 </script>
