@@ -494,10 +494,10 @@ tr:hover td{background:rgba(255,255,255,.02);}
     </div>
   </div>
 
-  <!-- FILA 2: Top clientes + Cobertura -->
+  <!-- FILA 2: Ventas por categoría + Cobertura -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
     <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-top:1px solid var(--border2);border-radius:14px;padding:18px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
-      <div class="sec-lbl" style="margin-bottom:14px;">Top 10 clientes por pedidos</div>
+      <div class="sec-lbl" style="margin-bottom:14px;">Ventas por categoría</div>
       <canvas id="grafTopCli" height="300"></canvas>
     </div>
     <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-top:1px solid var(--border2);border-radius:14px;padding:18px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
@@ -1896,25 +1896,43 @@ function renderGraficosPanel(){
     options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:tickColor,font:{size:10},boxWidth:12,padding:8}}}}
   });
 
-  // ── 3. TOP CLIENTES ──
-  const cliIdx={};
+  // ── 3. VENTAS POR CATEGORÍA ──
+  const CATS=['Herbicidas','Fertilizantes','Insecticidas','Fungicidas','Aceites/Coadyuvantes','Inoculantes','Semillas','Silos Bolsa','Otros'];
+  const CAT_COLORS={'Herbicidas':'rgba(46,170,110,.8)','Fertilizantes':'rgba(245,158,11,.8)','Insecticidas':'rgba(239,68,68,.8)','Fungicidas':'rgba(139,92,246,.8)','Aceites/Coadyuvantes':'rgba(20,184,166,.8)','Inoculantes':'rgba(59,130,246,.8)','Semillas':'rgba(249,115,22,.8)','Silos Bolsa':'rgba(132,204,22,.8)','Otros':'rgba(156,163,175,.8)'};
+
+  // Crear mapa producto → categoría desde preciosCache
+  const prodCat={};
+  preciosCacheConCat.forEach(p=>{prodCat[p.name]=p.cat;});
+
+  // Sumar por categoría
+  const catIdx={};
+  CATS.forEach(c=>catIdx[c]=0);
   pedidos.forEach(p=>{
-    if(!p.cliente)return;
-    if(!cliIdx[p.cliente])cliIdx[p.cliente]=0;
     const items=p.items?JSON.parse(p.items):[];
-    cliIdx[p.cliente]+=items.reduce((s,i)=>s+(+i.cant||0),0);
+    items.forEach(i=>{
+      if(!i.prod)return;
+      const cat=prodCat[i.prod]||'Otros';
+      const key=CATS.includes(cat)?cat:'Otros';
+      catIdx[key]=(catIdx[key]||0)+(+i.cant||0);
+    });
   });
-  const topCli=Object.entries(cliIdx).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+  // Filtrar categorías con ventas
+  const catData=CATS.map(c=>({cat:c,val:catIdx[c]||0})).filter(c=>c.val>0).sort((a,b)=>b.val-a.val);
+
   if(grafTopCli)grafTopCli.destroy();
   grafTopCli=new Chart(document.getElementById('grafTopCli').getContext('2d'),{
     type:'bar',
     data:{
-      labels:topCli.map(([n])=>n.split(',')[0]),
-      datasets:[{label:'Unidades',data:topCli.map(([,v])=>v),backgroundColor:'rgba(46,170,110,.75)',borderRadius:4,borderSkipped:false}]
+      labels:catData.map(c=>c.cat),
+      datasets:[{label:'Unidades vendidas',data:catData.map(c=>c.val),
+        backgroundColor:catData.map(c=>CAT_COLORS[c.cat]||'rgba(156,163,175,.8)'),
+        borderRadius:6,borderSkipped:false}]
     },
-    options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},
-      scales:{x:{beginAtZero:true,ticks:{color:tickColor,font:{size:10}},grid:{color:gridColor}},
-        y:{ticks:{color:'rgba(255,255,255,.7)',font:{size:11}},grid:{display:false}}}}
+    options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:ctx=>`${Number(ctx.raw).toLocaleString('es-AR')} unidades`}}},
+      scales:{x:{beginAtZero:true,ticks:{color:tickColor,font:{size:10},callback:v=>Number(v).toLocaleString('es-AR')},grid:{color:gridColor}},
+        y:{ticks:{color:'rgba(255,255,255,.8)',font:{size:12,weight:'600'}},grid:{display:false}}}}
   });
 
   // ── 4. COBERTURA CARTERA ──
