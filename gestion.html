@@ -790,6 +790,18 @@ tr:hover td{background:rgba(255,255,255,.02);}
   </div>
 </div>
 
+<!-- MODAL NOTA -->
+<div class="modal-bg" id="modalNota">
+  <div class="modal">
+    <h2>Nueva Nota</h2>
+    <div class="fg"><label>Nota</label><textarea id="notaTexto" placeholder="Escribí tu nota..." rows="5"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalNota')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNota()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL NOTA CLIENTE -->
 <div class="modal-bg" id="modalNotaCliente">
   <div class="modal">
@@ -798,16 +810,6 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modalNotaCliente')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveNotaCliente()">✓ Guardar</button>
-    </div>
-  </div>
-</div>
-
-  <div class="modal">
-    <h2>Nueva Nota</h2>
-    <div class="fg"><label>Nota</label><textarea id="notaTexto" placeholder="Escribí tu nota..." rows="5"></textarea></div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modalNota')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveNota()">✓ Guardar</button>
     </div>
   </div>
 </div>
