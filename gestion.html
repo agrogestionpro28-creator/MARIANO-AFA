@@ -829,7 +829,22 @@ tr:hover td{background:rgba(255,255,255,.02);}
   <div id="pcObs" style="font-size:11px;opacity:.6;margin-top:6px;"></div>
 </div>
 
-<div id="toast"></div>
+<!-- TARJETA REPARTO IMAGEN (ámbar) -->
+<div id="repartoCard" style="position:fixed;left:-9999px;top:0;background:linear-gradient(145deg,#78350f,#92400e,#b45309);border-radius:16px;padding:20px 24px;width:360px;color:white;font-family:'Barlow',sans-serif;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,.2);padding-bottom:10px;">
+    <div style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:7px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;color:white;">AFA</span>
+    </div>
+    <div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;opacity:.8;">Agricultores Federados Argentinos</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:800;letter-spacing:2px;color:#fcd34d;">🚚 REPARTO</div>
+    </div>
+  </div>
+  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;margin-bottom:4px;" id="rpCliente">CLIENTE</div>
+  <div style="font-size:11px;opacity:.7;margin-bottom:12px;" id="rpFecha">Fecha</div>
+  <div id="rpItems"></div>
+  <div id="rpObs" style="font-size:11px;opacity:.6;margin-top:8px;border-top:1px solid rgba(255,255,255,.15);padding-top:6px;"></div>
+</div>
 
 <script>
 // ══ SUPABASE ══
@@ -1226,7 +1241,8 @@ function renderPedCard(p){
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
       <div>${badges}</div>
       <div class="td-actions">
-        <button class="btn btn-secondary btn-sm" onclick="generarImagenPedidoId('${p.id}')">📸</button>
+        <button class="btn btn-secondary btn-sm" onclick="generarImagenPedidoId('${p.id}')" title="Imagen pedido">📸</button>
+        <button class="btn btn-secondary btn-sm" onclick="generarImagenReparto('${p.id}')" title="Imagen reparto" style="background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3);color:var(--gold);">🚚</button>
         <button class="btn btn-secondary btn-sm" onclick="openPedidoModal('${p.id}')">✏️</button>
       </div>
     </div>
@@ -1347,7 +1363,39 @@ function capturePedCard(){
   },100);
 }
 function dlCanvas(canvas){const a=document.createElement('a');a.download='pedido-afa.png';a.href=canvas.toDataURL('image/png');a.click();toast('✓ Imagen guardada');}
-function generarImagenPedido(){
+function generarImagenReparto(id){
+  const p=pedidos.find(x=>x.id===id);if(!p)return;
+  const items=p.items?JSON.parse(p.items):[];
+  // Llenar tarjeta ámbar
+  document.getElementById('rpCliente').textContent=(p.cliente||'').toUpperCase();
+  document.getElementById('rpFecha').textContent=p.fecha?new Date(p.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'}):'';
+  document.getElementById('rpItems').innerHTML=items.map(i=>`
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.12);">
+      <span style="font-size:14px;font-weight:600;">${i.prod}</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:19px;color:#fcd34d;">${i.cant} ${i.unit}</span>
+    </div>`).join('');
+  document.getElementById('rpObs').textContent=p.obs||'';
+  // Capturar
+  const card=document.getElementById('repartoCard');
+  card.style.left='0';card.style.top='0';card.style.position='absolute';card.style.zIndex='-1';
+  setTimeout(()=>{
+    html2canvas(card,{scale:3,backgroundColor:'#92400e',useCORS:true,logging:false}).then(canvas=>{
+      card.style.left='-9999px';card.style.position='fixed';
+      canvas.toBlob(blob=>{
+        const file=new File([blob],'reparto-afa.png',{type:'image/png'});
+        if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]}))
+          navigator.share({files:[file],title:'Reparto AFA'}).catch(()=>dlReparto(canvas,p.cliente));
+        else dlReparto(canvas,p.cliente);
+      },'image/png');
+    });
+  },100);
+}
+function dlReparto(canvas,cliente){
+  const a=document.createElement('a');
+  a.download=`reparto-afa-${(cliente||'').replace(/[\s,]/g,'-').toLowerCase()}.png`;
+  a.href=canvas.toDataURL('image/png');a.click();
+  toast('✓ Imagen de reparto generada');
+}
   const obsIncluir=document.getElementById('pedObsImg').checked;
   const obs=obsIncluir?document.getElementById('pedObs').value:'';
   buildPedCard(document.getElementById('pedCliente').value,document.getElementById('pedFecha').value,getPedItems(),document.getElementById('pedPago').value,obs);
