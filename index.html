@@ -556,7 +556,7 @@ function rg(){
     <div class="cc">${p.cat}</div>
     <div class="cn">${p.name}</div>
     <div class="cp">USD ${fmt(p.price)}</div>
-    <div class="cu">por ${p.unit}${p.raw20b?` · bdón 20L: USD ${fmt(p.raw20b)}`:''}</div>
+    <div class="cu">por ${p.unit}</div>
     <div class="cid">${p.id}</div>
   </div>`).join('');
 }
@@ -632,7 +632,7 @@ function selP(id){
 🌾 *AFA — Agricultores Federados Argentinos*
 ━━━━━━━━━━━━━━━━━━━━
 📦 *${sel.name}*
-💲 USD ${fmt(sel.price)} / ${sel.unit}${sel.raw20b?`\n📦 Bidón 20L: USD ${fmt(sel.raw20b)}`:''}
+💲 USD ${fmt(sel.price)} / ${sel.unit}
 📅 Precio actualizado al ${today()}
 ━━━━━━━━━━━━━━━━━━━━`;
   document.getElementById('pp').style.display='block';
