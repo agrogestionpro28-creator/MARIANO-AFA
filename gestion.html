@@ -1418,6 +1418,7 @@ function dlReparto(canvas,cliente){
   a.href=canvas.toDataURL('image/png');a.click();
   toast('✓ Imagen de reparto generada');
 }
+function generarImagenPedido(){
   const obsIncluir=document.getElementById('pedObsImg').checked;
   const obs=obsIncluir?document.getElementById('pedObs').value:'';
   buildPedCard(document.getElementById('pedCliente').value,document.getElementById('pedFecha').value,getPedItems(),document.getElementById('pedPago').value,obs);
