@@ -359,6 +359,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <div class="sec-actions">
       <button class="btn btn-secondary btn-sm" onclick="exportPedidosXLS()">⬇ Excel</button>
       <button class="btn btn-secondary btn-sm" id="btnHistorial" onclick="toggleHistorial()">📁 Historial</button>
+      <button class="btn btn-secondary btn-sm" onclick="openRepartoModal()" style="background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3);color:var(--gold);">🚚 Reparto</button>
       <button class="btn btn-primary" onclick="openPedidoModal()">+ Nuevo pedido</button>
     </div>
   </div>
@@ -790,6 +791,25 @@ tr:hover td{background:rgba(255,255,255,.02);}
   </div>
 </div>
 
+<!-- MODAL REPARTO -->
+<div class="modal-bg" id="modalReparto">
+  <div class="modal">
+    <h2 style="color:var(--gold);">🚚 Nuevo Reparto</h2>
+    <div class="fg-row">
+      <div class="fg"><label>Productor</label><select id="rpProducer"><option value="">— Seleccionar —</option></select></div>
+      <div class="fg"><label>Fecha</label><input type="date" id="rpFechaModal"></div>
+    </div>
+    <div class="sect-divider">Productos</div>
+    <div id="rpItems"></div>
+    <button class="btn btn-secondary btn-sm" onclick="addRpItem()" style="margin-bottom:12px;">+ Agregar producto</button>
+    <div class="fg"><label>Nota / Observación</label><textarea id="rpNotaModal" placeholder="Ej: Entregar en campo norte..." rows="2"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalReparto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="generarRepartoDesdeModal()" style="background:var(--gold);color:#0a0a0a;">📸 Generar imagen</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL NOTA -->
 <div class="modal-bg" id="modalNota">
   <div class="modal">
@@ -842,8 +862,8 @@ tr:hover td{background:rgba(255,255,255,.02);}
   </div>
   <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;margin-bottom:4px;" id="rpCliente">CLIENTE</div>
   <div style="font-size:11px;opacity:.7;margin-bottom:12px;" id="rpFecha">Fecha</div>
-  <div id="rpItems"></div>
-  <div id="rpObs" style="font-size:11px;opacity:.6;margin-top:8px;border-top:1px solid rgba(255,255,255,.15);padding-top:6px;"></div>
+  <div id="rpItems2"></div>
+  <div id="rpObs2" style="font-size:11px;opacity:.6;margin-top:8px;border-top:1px solid rgba(255,255,255,.15);padding-top:6px;"></div>
 </div>
 
 <div id="toast"></div>
@@ -1371,12 +1391,12 @@ function generarImagenReparto(id){
   // Llenar tarjeta ámbar
   document.getElementById('rpCliente').textContent=(p.cliente||'').toUpperCase();
   document.getElementById('rpFecha').textContent=p.fecha?new Date(p.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'}):'';
-  document.getElementById('rpItems').innerHTML=items.map(i=>`
+  document.getElementById('rpItems2').innerHTML=items.map(i=>`
     <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.12);">
       <span style="font-size:14px;font-weight:600;">${i.prod}</span>
       <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:19px;color:#fcd34d;">${i.cant} ${i.unit}</span>
     </div>`).join('');
-  document.getElementById('rpObs').textContent=p.obs||'';
+  document.getElementById('rpObs2').textContent=p.obs||'';
   // Capturar
   const card=document.getElementById('repartoCard');
   card.style.left='0';card.style.top='0';card.style.position='absolute';card.style.zIndex='-1';
@@ -1398,7 +1418,6 @@ function dlReparto(canvas,cliente){
   a.href=canvas.toDataURL('image/png');a.click();
   toast('✓ Imagen de reparto generada');
 }
-function generarImagenPedido(){
   const obsIncluir=document.getElementById('pedObsImg').checked;
   const obs=obsIncluir?document.getElementById('pedObs').value:'';
   buildPedCard(document.getElementById('pedCliente').value,document.getElementById('pedFecha').value,getPedItems(),document.getElementById('pedPago').value,obs);
@@ -2331,6 +2350,102 @@ async function saveCondicion(){
     }
     closeModal('modalCondiciones');renderCondiciones();toast('✓ Condiciones guardadas');
   }catch(e){toast('Error: '+e.message);}
+}
+
+// ══ REPARTO MODAL ══
+let rpItemCount=0;
+
+function openRepartoModal(){
+  rpItemCount=0;
+  document.getElementById('rpItems').innerHTML='';
+  // Llenar productores
+  const sel=document.getElementById('rpProducer');
+  sel.innerHTML='<option value="">— Seleccionar —</option>'+
+    clientes.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(c=>`<option value="${c.nombre}">${c.nombre}</option>`).join('');
+  document.getElementById('rpFechaModal').value=todayISO();
+  document.getElementById('rpNotaModal').value='';
+  addRpItem();
+  document.getElementById('modalReparto').classList.add('open');
+}
+
+function addRpItem(){
+  rpItemCount++;
+  const n=rpItemCount;
+  const div=document.createElement('div');
+  div.id=`rpitem_${n}`;
+  div.style.cssText='position:relative;display:grid;grid-template-columns:1fr 80px 60px auto;gap:6px;margin-bottom:6px;align-items:start;';
+  div.innerHTML=`
+    <div style="position:relative;">
+      <input id="rpprod_${n}" placeholder="Buscar producto..." autocomplete="off"
+        style="width:100%;padding:8px;background:rgba(255,255,255,.05);border:1.5px solid var(--border2);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;color:white;"
+        oninput="showRpSugg(${n})" onfocus="showRpSugg(${n})" onblur="setTimeout(()=>hideRpSugg(${n}),200)">
+      <div id="rpsugg_${n}" style="display:none;position:absolute;top:100%;left:0;right:0;background:#1a1a1a;border:1.5px solid var(--gold);border-radius:0 0 8px 8px;z-index:999;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.6);"></div>
+    </div>
+    <input id="rpcant_${n}" type="number" placeholder="Cant." style="padding:8px;background:rgba(255,255,255,.05);border:1.5px solid var(--border2);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;color:white;">
+    <input id="rpunit_${n}" placeholder="Unid." value="LTS" style="padding:8px;background:rgba(255,255,255,.05);border:1.5px solid var(--border2);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;color:white;">
+    <button onclick="document.getElementById('rpitem_${n}').remove()" style="background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.25);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:14px;margin-top:1px;">✕</button>`;
+  document.getElementById('rpItems').appendChild(div);
+}
+
+function showRpSugg(n){
+  const inp=document.getElementById('rpprod_'+n);
+  const sugg=document.getElementById('rpsugg_'+n);
+  const q=inp.value.trim().toLowerCase();
+  const m=preciosCache.filter(p=>p.name.toLowerCase().includes(q)).slice(0,8);
+  if(!m.length){sugg.style.display='none';return;}
+  sugg.innerHTML=m.map(p=>`<div onclick="selRpProd(${n},'${p.name.replace(/'/g,"\\'")}','${p.unit}')"
+    style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);color:rgba(255,255,255,.8);"
+    onmouseover="this.style.background='rgba(245,158,11,.1)'" onmouseout="this.style.background=''">
+    <strong style="color:white;">${p.name}</strong> <span style="color:rgba(255,255,255,.3);font-size:11px;">${p.unit}</span>
+  </div>`).join('');
+  sugg.style.display='block';
+}
+function selRpProd(n,name,unit){
+  document.getElementById('rpprod_'+n).value=name;
+  document.getElementById('rpunit_'+n).value=unit;
+  hideRpSugg(n);
+  setTimeout(()=>document.getElementById('rpcant_'+n).focus(),50);
+}
+function hideRpSugg(n){const s=document.getElementById('rpsugg_'+n);if(s)s.style.display='none';}
+
+function getRpItems(){
+  return[...document.getElementById('rpItems').children].map(div=>{
+    const n=div.id.replace('rpitem_','');
+    return{prod:document.getElementById('rpprod_'+n)?.value.trim()||'',cant:document.getElementById('rpcant_'+n)?.value||'',unit:document.getElementById('rpunit_'+n)?.value||''};
+  }).filter(i=>i.prod&&i.cant);
+}
+
+function generarRepartoDesdeModal(){
+  const productor=document.getElementById('rpProducer').value;
+  const fecha=document.getElementById('rpFechaModal').value;
+  const nota=document.getElementById('rpNotaModal').value;
+  const items=getRpItems();
+  if(!productor){toast('Seleccioná un productor');return;}
+  if(!items.length){toast('Agregá al menos un producto');return;}
+  // Llenar tarjeta ámbar
+  document.getElementById('rpCliente').textContent=productor.toUpperCase();
+  document.getElementById('rpFecha').textContent=fecha?new Date(fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'}):'';
+  document.getElementById('rpItems2').innerHTML=items.map(i=>`
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.12);">
+      <span style="font-size:14px;font-weight:600;">${i.prod}</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:19px;color:#fcd34d;">${i.cant} ${i.unit}</span>
+    </div>`).join('');
+  document.getElementById('rpObs2').textContent=nota||'';
+  closeModal('modalReparto');
+  // Capturar
+  const card=document.getElementById('repartoCard');
+  card.style.left='0';card.style.top='0';card.style.position='absolute';card.style.zIndex='-1';
+  setTimeout(()=>{
+    html2canvas(card,{scale:3,backgroundColor:'#92400e',useCORS:true,logging:false}).then(canvas=>{
+      card.style.left='-9999px';card.style.position='fixed';
+      canvas.toBlob(blob=>{
+        const file=new File([blob],'reparto-afa.png',{type:'image/png'});
+        if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]}))
+          navigator.share({files:[file],title:'Reparto AFA'}).catch(()=>dlReparto(canvas,productor));
+        else dlReparto(canvas,productor);
+      },'image/png');
+    });
+  },150);
 }
 
 // ══ INIT ══
