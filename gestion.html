@@ -632,27 +632,33 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 <!-- VISTA INFORMES -->
 <div id="v-informes" class="view">
-  <div style="max-width:720px;margin:0 auto;">
+  <div style="max-width:760px;margin:0 auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
       <div>
-        <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:28px;color:white;margin:0;">📄 Informe de Cultivo</h2>
-        <p style="color:rgba(255,255,255,.4);font-size:13px;margin:4px 0 0;">Generá y descargá el informe en PDF</p>
+        <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:28px;color:white;margin:0;">📄 Informe Técnico de Cultivo</h2>
+        <p style="color:rgba(255,255,255,.4);font-size:13px;margin:4px 0 0;">Generá el informe profesional en PDF e Imagen</p>
       </div>
     </div>
 
     <!-- FORMULARIO -->
-    <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-radius:16px;padding:20px 24px;display:grid;gap:14px;">
+    <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-radius:16px;padding:20px 24px;display:grid;gap:18px;">
 
-      <!-- Productor -->
-      <div>
-        <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Productor</label>
-        <select id="infProductor" style="width:100%;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;">
-          <option value="">— Seleccionar —</option>
-        </select>
+      <!-- Productor + Campaña -->
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;">
+        <div>
+          <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Productor</label>
+          <select id="infProductor" style="width:100%;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;">
+            <option value="">— Seleccionar —</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Campaña</label>
+          <input id="infCampana" type="text" placeholder="ej: 26/27" value="26/27" style="width:100%;box-sizing:border-box;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;">
+        </div>
       </div>
 
-      <!-- Cultivo + Campaña + Has -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+      <!-- Cultivo + Fecha -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div>
           <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Cultivo</label>
           <select id="infCultivo" style="width:100%;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;">
@@ -665,44 +671,75 @@ tr:hover td{background:rgba(255,255,255,.02);}
           </select>
         </div>
         <div>
-          <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Campaña</label>
-          <input id="infCampana" type="text" placeholder="ej: 26/27" value="26/27" style="width:100%;box-sizing:border-box;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;">
-        </div>
-        <div>
-          <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Hectáreas</label>
-          <input id="infHas" type="number" placeholder="ej: 150" style="width:100%;box-sizing:border-box;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;">
+          <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Fecha del informe</label>
+          <input id="infFecha" type="date" style="width:100%;box-sizing:border-box;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;color-scheme:dark;">
         </div>
       </div>
 
-      <!-- Estado del cultivo -->
+      <!-- SECCIÓN 1: Objeto -->
       <div>
-        <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Estado del cultivo / Descripción general</label>
-        <textarea id="infEstado" rows="4" placeholder="Describí la situación actual: fechas de siembra por lote, stand de plantas, estado fenológico, incidencia de plagas/enfermedades, lluvias recientes, etc." style="width:100%;box-sizing:border-box;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;resize:vertical;min-height:100px;"></textarea>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+          <span style="background:var(--g);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;">1</span>
+          <label style="font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.6);">Objeto del informe</label>
+        </div>
+        <textarea id="infObjeto" rows="3" placeholder="Ej: El objetivo del presente informe es dar a conocer el estado actual del cultivo de Soja en los lotes asignados al productor, durante la campaña 25/26." style="width:100%;box-sizing:border-box;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:13px;font-family:'Barlow',sans-serif;color:white;outline:none;resize:vertical;min-height:72px;"></textarea>
+      </div>
+
+      <!-- SECCIÓN 2: Lotes y variedades -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="background:var(--g);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;">2</span>
+            <label style="font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.6);">Lotes y variedades relevados</label>
+          </div>
+          <button onclick="addInfLote()" style="background:rgba(46,170,110,.2);border:1px solid var(--g);color:var(--g);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;">+ Agregar lote</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;" id="infLotesTable">
+            <thead>
+              <tr style="background:rgba(46,170,110,.15);">
+                <th style="padding:8px 10px;text-align:left;color:rgba(255,255,255,.5);font-size:11px;font-weight:700;letter-spacing:.5px;border-bottom:1px solid rgba(255,255,255,.08);">LOTE</th>
+                <th style="padding:8px 10px;text-align:left;color:rgba(255,255,255,.5);font-size:11px;font-weight:700;letter-spacing:.5px;border-bottom:1px solid rgba(255,255,255,.08);">VARIEDAD</th>
+                <th style="padding:8px 10px;text-align:center;color:rgba(255,255,255,.5);font-size:11px;font-weight:700;letter-spacing:.5px;border-bottom:1px solid rgba(255,255,255,.08);">SUPERFICIE (ha)</th>
+                <th style="padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.08);"></th>
+              </tr>
+            </thead>
+            <tbody id="infLotesTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECCIÓN 3: Estado del cultivo -->
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+          <span style="background:var(--g);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;">3</span>
+          <label style="font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.6);">Estado del cultivo</label>
+        </div>
+        <textarea id="infEstado" rows="5" placeholder="Describí el estado fenológico, stand de plantas, condiciones climáticas, incidencia de plagas/enfermedades, lluvias registradas, etc." style="width:100%;box-sizing:border-box;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:13px;font-family:'Barlow',sans-serif;color:white;outline:none;resize:vertical;min-height:100px;"></textarea>
       </div>
 
       <!-- Imágenes -->
       <div>
-        <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:8px;">Imágenes (máx. 4)</label>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="background:rgba(245,158,11,.3);color:#f59e0b;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;">📷</span>
+          <label style="font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.6);">Registro fotográfico (máx. 4)</label>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="infImgsGrid">
-          <!-- img 1 -->
           <div style="background:rgba(255,255,255,.03);border:1.5px dashed var(--border2);border-radius:10px;padding:12px;">
             <input type="file" id="infImg1" accept="image/*" onchange="previewInfImg(1)" style="font-size:12px;color:rgba(255,255,255,.5);width:100%;">
             <img id="infPreview1" style="display:none;width:100%;border-radius:7px;margin-top:8px;max-height:140px;object-fit:cover;">
             <input id="infCaption1" type="text" placeholder="Epígrafe (opcional)" style="margin-top:6px;width:100%;box-sizing:border-box;padding:6px 9px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:'Barlow',sans-serif;color:white;outline:none;">
           </div>
-          <!-- img 2 -->
           <div style="background:rgba(255,255,255,.03);border:1.5px dashed var(--border2);border-radius:10px;padding:12px;">
             <input type="file" id="infImg2" accept="image/*" onchange="previewInfImg(2)" style="font-size:12px;color:rgba(255,255,255,.5);width:100%;">
             <img id="infPreview2" style="display:none;width:100%;border-radius:7px;margin-top:8px;max-height:140px;object-fit:cover;">
             <input id="infCaption2" type="text" placeholder="Epígrafe (opcional)" style="margin-top:6px;width:100%;box-sizing:border-box;padding:6px 9px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:'Barlow',sans-serif;color:white;outline:none;">
           </div>
-          <!-- img 3 -->
           <div style="background:rgba(255,255,255,.03);border:1.5px dashed var(--border2);border-radius:10px;padding:12px;">
             <input type="file" id="infImg3" accept="image/*" onchange="previewInfImg(3)" style="font-size:12px;color:rgba(255,255,255,.5);width:100%;">
             <img id="infPreview3" style="display:none;width:100%;border-radius:7px;margin-top:8px;max-height:140px;object-fit:cover;">
             <input id="infCaption3" type="text" placeholder="Epígrafe (opcional)" style="margin-top:6px;width:100%;box-sizing:border-box;padding:6px 9px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:'Barlow',sans-serif;color:white;outline:none;">
           </div>
-          <!-- img 4 -->
           <div style="background:rgba(255,255,255,.03);border:1.5px dashed var(--border2);border-radius:10px;padding:12px;">
             <input type="file" id="infImg4" accept="image/*" onchange="previewInfImg(4)" style="font-size:12px;color:rgba(255,255,255,.5);width:100%;">
             <img id="infPreview4" style="display:none;width:100%;border-radius:7px;margin-top:8px;max-height:140px;object-fit:cover;">
@@ -711,21 +748,30 @@ tr:hover td{background:rgba(255,255,255,.02);}
         </div>
       </div>
 
-      <!-- Observaciones -->
+      <!-- SECCIÓN 4: Conclusiones -->
       <div>
-        <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Observaciones y Conclusiones</label>
-        <textarea id="infObs" rows="4" placeholder="Recomendaciones, observaciones finales, próximas acciones a tomar, etc." style="width:100%;box-sizing:border-box;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;resize:vertical;min-height:100px;"></textarea>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+          <span style="background:var(--g);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;">4</span>
+          <label style="font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.6);">Conclusiones y recomendaciones</label>
+        </div>
+        <textarea id="infObs" rows="4" placeholder="Recomendaciones técnicas, observaciones finales, próximas acciones a tomar, manejo sugerido, etc." style="width:100%;box-sizing:border-box;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:13px;font-family:'Barlow',sans-serif;color:white;outline:none;resize:vertical;min-height:100px;"></textarea>
       </div>
 
-      <!-- Botón -->
-      <div style="display:flex;justify-content:flex-end;padding-top:4px;">
-        <button class="btn btn-primary" onclick="generarInformePDF()" id="btnInforme" style="font-size:15px;padding:12px 28px;">
-          📄 Generar y Descargar PDF
+      <!-- Botones -->
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:4px;flex-wrap:wrap;">
+        <button class="btn" onclick="generarImagenInforme()" id="btnInformeImg" style="font-size:14px;padding:11px 22px;background:rgba(245,158,11,.15);border:1.5px solid #f59e0b;color:#f59e0b;">
+          🖼️ Generar Imagen PNG
+        </button>
+        <button class="btn btn-primary" onclick="generarInformePDF()" id="btnInforme" style="font-size:14px;padding:11px 22px;">
+          📄 Generar PDF
         </button>
       </div>
     </div>
   </div>
 </div>
+
+<!-- TARJETA INFORME OCULTA (para html2canvas) -->
+<div id="infCard" style="position:fixed;left:-9999px;top:0;width:680px;font-family:'Barlow',sans-serif;overflow:hidden;border-radius:0;background:white;"></div>
 
 <!-- TARJETA COSECHA OCULTA -->
 <div id="cosCard" style="position:fixed;left:-9999px;top:0;width:520px;font-family:'Barlow',sans-serif;overflow:hidden;border-radius:0;">
@@ -2550,12 +2596,43 @@ function generarRepartoDesdeModal(){
 }
 
 // ══ INFORMES PDF ══
+const AFA_LOGO_B64 = 'data:image/png;base64,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';
+
 function initInformes(){
   const sel=document.getElementById('infProductor');
   if(sel){
     sel.innerHTML='<option value="">— Seleccionar —</option>'+
       clientes.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(c=>`<option value="${c.nombre}">${c.nombre}</option>`).join('');
   }
+  // Fecha por defecto hoy
+  const fd=document.getElementById('infFecha');
+  if(fd&&!fd.value){const d=new Date();fd.value=d.toISOString().split('T')[0];}
+  // Init tabla lotes si vacía
+  const tb=document.getElementById('infLotesTbody');
+  if(tb&&tb.children.length===0)addInfLote();
+}
+
+function addInfLote(){
+  const tb=document.getElementById('infLotesTbody');
+  if(!tb)return;
+  const idx=tb.children.length;
+  const tr=document.createElement('tr');
+  tr.style.cssText='border-bottom:1px solid rgba(255,255,255,.06);';
+  tr.innerHTML=`
+    <td style="padding:6px 4px;">
+      <input type="text" placeholder="Lote 1" style="width:100%;box-sizing:border-box;padding:7px 9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;color:white;outline:none;" class="inf-lote-nombre">
+    </td>
+    <td style="padding:6px 4px;">
+      <input type="text" placeholder="Variedad/Cultivar" style="width:100%;box-sizing:border-box;padding:7px 9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;color:white;outline:none;" class="inf-lote-variedad">
+    </td>
+    <td style="padding:6px 4px;text-align:center;">
+      <input type="number" placeholder="0" min="0" step="0.5" style="width:90px;box-sizing:border-box;padding:7px 9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;color:white;outline:none;text-align:center;" class="inf-lote-has">
+    </td>
+    <td style="padding:6px 4px;text-align:center;">
+      <button onclick="this.closest('tr').remove()" style="background:rgba(255,80,80,.15);border:1px solid rgba(255,80,80,.3);color:#ff6b6b;border-radius:6px;padding:4px 9px;font-size:12px;cursor:pointer;">✕</button>
+    </td>
+  `;
+  tb.appendChild(tr);
 }
 
 function previewInfImg(n){
@@ -2568,13 +2645,178 @@ function previewInfImg(n){
   reader.readAsDataURL(file);
 }
 
+function getInfLotes(){
+  const rows=document.querySelectorAll('#infLotesTbody tr');
+  const lotes=[];
+  rows.forEach(tr=>{
+    const nombre=tr.querySelector('.inf-lote-nombre')?.value.trim();
+    const variedad=tr.querySelector('.inf-lote-variedad')?.value.trim();
+    const has=tr.querySelector('.inf-lote-has')?.value.trim();
+    if(nombre||variedad||has)lotes.push({nombre:nombre||'—',variedad:variedad||'—',has:has||'—'});
+  });
+  return lotes;
+}
+
+function buildInfCardHTML(data){
+  const {productor,cultivo,campana,fecha,objeto,lotes,estado,imgs,obs}=data;
+  const totalHas=lotes.reduce((s,l)=>{const n=parseFloat(l.has);return s+(isNaN(n)?0:n);},0);
+  const fechaStr=fecha?new Date(fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'}):new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+
+  let lotesRows=lotes.map(l=>`
+    <tr>
+      <td style="padding:7px 12px;border-bottom:1px solid #e8f5ee;font-size:13px;color:#333;">${l.nombre}</td>
+      <td style="padding:7px 12px;border-bottom:1px solid #e8f5ee;font-size:13px;color:#333;">${l.variedad}</td>
+      <td style="padding:7px 12px;border-bottom:1px solid #e8f5ee;font-size:13px;color:#333;text-align:center;">${l.has}</td>
+    </tr>
+  `).join('');
+
+  let imgRows='';
+  if(imgs.length){
+    for(let i=0;i<imgs.length;i+=2){
+      imgRows+=`<tr>`;
+      for(let j=i;j<Math.min(i+2,imgs.length);j++){
+        imgRows+=`<td style="padding:8px;width:50%;vertical-align:top;">
+          <img src="${imgs[j].dataUrl}" style="width:100%;height:160px;object-fit:cover;border-radius:6px;display:block;">
+          ${imgs[j].caption?`<p style="text-align:center;font-size:11px;color:#666;margin:4px 0 0;font-style:italic;">${imgs[j].caption}</p>`:''}
+        </td>`;
+      }
+      if(imgs.length%2!==0&&i===imgs.length-1)imgRows+=`<td style="width:50%;"></td>`;
+      imgRows+=`</tr>`;
+    }
+  }
+
+  return `<div style="background:white;width:680px;font-family:Arial,Helvetica,sans-serif;padding:0;">
+    <!-- HEADER -->
+    <div style="background:#1a6640;padding:20px 28px 16px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <img src="${AFA_LOGO_B64}" style="height:56px;width:auto;" crossorigin="anonymous">
+        <div style="border-left:2px solid rgba(255,255,255,.3);padding-left:16px;">
+          <div style="color:rgba(255,255,255,.7);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">Asociación de Cooperativas Argentinas</div>
+          <div style="color:white;font-size:18px;font-weight:700;margin-top:2px;line-height:1.1;">AFA San Carlos Centro</div>
+          <div style="color:#f59e0b;font-size:11px;font-weight:700;letter-spacing:.5px;margin-top:3px;">INGENIERÍA AGRONÓMICA</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="color:rgba(255,255,255,.6);font-size:10px;text-transform:uppercase;letter-spacing:.5px;">Fecha</div>
+        <div style="color:white;font-size:13px;font-weight:600;">${fechaStr}</div>
+        <div style="background:#f59e0b;color:white;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:6px;letter-spacing:.5px;">Campaña ${campana||'—'}</div>
+      </div>
+    </div>
+    <!-- BARRA DORADA -->
+    <div style="background:#f59e0b;height:4px;"></div>
+    <!-- TÍTULO DOCUMENTO -->
+    <div style="background:#f0f9f4;padding:12px 28px;border-bottom:1px solid #d0e8d8;">
+      <div style="font-size:16px;font-weight:700;color:#1a6640;letter-spacing:.5px;text-transform:uppercase;">Informe Técnico de Estado de Cultivo</div>
+      <div style="font-size:12px;color:#555;margin-top:2px;">Cultivo: <strong>${cultivo}</strong> · Productor: <strong>${productor}</strong>${totalHas>0?' · Total: <strong>'+totalHas.toLocaleString('es-AR',{maximumFractionDigits:1})+' ha</strong>':''}</div>
+    </div>
+    <!-- CUERPO -->
+    <div style="padding:20px 28px;">
+
+      <!-- 1. OBJETO -->
+      ${objeto?`<div style="margin-bottom:18px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="background:#1a6640;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;min-width:20px;text-align:center;">1</div>
+          <div style="font-size:13px;font-weight:700;color:#1a6640;text-transform:uppercase;letter-spacing:.5px;">Objeto</div>
+        </div>
+        <p style="margin:0;font-size:13px;color:#333;line-height:1.6;padding-left:30px;">${objeto.replace(/\n/g,'<br>')}</p>
+      </div>`:''}
+
+      <!-- 2. LOTES -->
+      ${lotes.length?`<div style="margin-bottom:18px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="background:#1a6640;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;min-width:20px;text-align:center;">2</div>
+          <div style="font-size:13px;font-weight:700;color:#1a6640;text-transform:uppercase;letter-spacing:.5px;">Lotes y variedades relevados</div>
+        </div>
+        <div style="padding-left:30px;">
+          <table style="width:100%;border-collapse:collapse;border:1px solid #d0e8d8;border-radius:8px;overflow:hidden;font-size:13px;">
+            <thead>
+              <tr style="background:#1a6640;">
+                <th style="padding:8px 12px;text-align:left;color:white;font-size:11px;font-weight:700;letter-spacing:.5px;">LOTE</th>
+                <th style="padding:8px 12px;text-align:left;color:white;font-size:11px;font-weight:700;letter-spacing:.5px;">VARIEDAD / CULTIVAR</th>
+                <th style="padding:8px 12px;text-align:center;color:white;font-size:11px;font-weight:700;letter-spacing:.5px;">SUPERFICIE (ha)</th>
+              </tr>
+            </thead>
+            <tbody>${lotesRows}</tbody>
+            ${totalHas>0?`<tfoot><tr style="background:#e8f5ee;">
+              <td colspan="2" style="padding:7px 12px;font-size:12px;font-weight:700;color:#1a6640;text-align:right;">TOTAL:</td>
+              <td style="padding:7px 12px;font-size:13px;font-weight:700;color:#1a6640;text-align:center;">${totalHas.toLocaleString('es-AR',{maximumFractionDigits:1})} ha</td>
+            </tr></tfoot>`:''}
+          </table>
+        </div>
+      </div>`:''}
+
+      <!-- 3. ESTADO -->
+      ${estado?`<div style="margin-bottom:18px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="background:#1a6640;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;min-width:20px;text-align:center;">3</div>
+          <div style="font-size:13px;font-weight:700;color:#1a6640;text-transform:uppercase;letter-spacing:.5px;">Estado del cultivo</div>
+        </div>
+        <p style="margin:0;font-size:13px;color:#333;line-height:1.6;padding-left:30px;">${estado.replace(/\n/g,'<br>')}</p>
+      </div>`:''}
+
+      <!-- FOTOS -->
+      ${imgRows?`<div style="margin-bottom:18px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="background:#f59e0b;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;">📷</div>
+          <div style="font-size:13px;font-weight:700;color:#1a6640;text-transform:uppercase;letter-spacing:.5px;">Registro fotográfico</div>
+        </div>
+        <div style="padding-left:30px;">
+          <table style="width:100%;border-collapse:collapse;">${imgRows}</table>
+        </div>
+      </div>`:''}
+
+      <!-- 4. CONCLUSIONES -->
+      ${obs?`<div style="margin-bottom:18px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="background:#1a6640;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;min-width:20px;text-align:center;">4</div>
+          <div style="font-size:13px;font-weight:700;color:#1a6640;text-transform:uppercase;letter-spacing:.5px;">Conclusión</div>
+        </div>
+        <p style="margin:0;font-size:13px;color:#333;line-height:1.6;padding-left:30px;">${obs.replace(/\n/g,'<br>')}</p>
+      </div>`:''}
+
+    </div>
+    <!-- BARRA DORADA INFERIOR -->
+    <div style="background:#f59e0b;height:3px;"></div>
+    <!-- FIRMA -->
+    <div style="background:#f0f9f4;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #d0e8d8;">
+      <div style="font-size:11px;color:#888;">AFA San Carlos Centro · Ingeniería Agronómica</div>
+      <div style="text-align:right;">
+        <div style="border-top:1.5px solid #1a6640;padding-top:6px;min-width:200px;">
+          <div style="font-size:12px;font-weight:700;color:#1a6640;">Ing. Agr. Mariano J. Bertaina</div>
+          <div style="font-size:11px;color:#555;">M.P. 82-1-1075</div>
+        </div>
+      </div>
+    </div>
+    <!-- PIE -->
+    <div style="background:#1a6640;padding:8px 28px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="color:rgba(255,255,255,.6);font-size:10px;">Informe Técnico — Campaña ${campana||'—'} · ${cultivo}</div>
+      <div style="color:rgba(255,255,255,.5);font-size:10px;">${fechaStr}</div>
+    </div>
+  </div>`;
+}
+
+async function getInfImgsData(){
+  const imgs=[];
+  for(let n=1;n<=4;n++){
+    const inp=document.getElementById('infImg'+n);
+    const cap=document.getElementById('infCaption'+n).value.trim();
+    if(inp.files&&inp.files[0]){
+      const dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(inp.files[0]);});
+      imgs.push({dataUrl,caption:cap});
+    }
+  }
+  return imgs;
+}
+
 async function generarInformePDF(){
   const productor=document.getElementById('infProductor').value;
   const cultivo=document.getElementById('infCultivo').value;
   const campana=document.getElementById('infCampana').value.trim();
-  const has=document.getElementById('infHas').value.trim();
+  const fecha=document.getElementById('infFecha').value;
+  const objeto=document.getElementById('infObjeto').value.trim();
   const estado=document.getElementById('infEstado').value.trim();
   const obs=document.getElementById('infObs').value.trim();
+  const lotes=getInfLotes();
 
   if(!productor){toast('Seleccioná un productor');return;}
   if(!cultivo){toast('Seleccioná un cultivo');return;}
@@ -2583,176 +2825,237 @@ async function generarInformePDF(){
   btn.textContent='⏳ Generando...';btn.disabled=true;
 
   try{
+    const imgs=await getInfImgsData();
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-    const W=210,M=18;
+    const W=210,M=16;
     let y=0;
 
-    // ── HEADER VERDE AFA ──
-    doc.setFillColor(26,102,64); // #1a6640
-    doc.rect(0,0,W,38,'F');
+    // ── HEADER VERDE ──
+    doc.setFillColor(26,102,64);
+    doc.rect(0,0,W,44,'F');
+    // Barra dorada
+    doc.setFillColor(245,158,11);
+    doc.rect(0,42,W,2.5,'F');
 
-    // Línea decorativa dorada
-    doc.setFillColor(245,158,11); // --gold
-    doc.rect(0,36,W,2,'F');
+    // Logo AFA
+    try{
+      doc.addImage(AFA_LOGO_B64,'PNG',M,4,28,16);
+    }catch(e){}
 
-    // Título AFA
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(22);
-    doc.setTextColor(255,255,255);
-    doc.text('AFA — San Carlos Centro',M,14);
+    // Línea vertical separadora
+    doc.setDrawColor(255,255,255,0.3);
+    doc.setLineWidth(0.3);
+    doc.line(M+32,6,M+32,40);
 
-    // Subtítulo
+    // Institución
     doc.setFont('helvetica','normal');
-    doc.setFontSize(10);
-    doc.setTextColor(200,230,210);
-    doc.text('Asociación de Cooperativas Argentinas · Ingeniería Agronómica',M,21);
+    doc.setFontSize(8);
+    doc.setTextColor(180,220,195);
+    doc.text('ASOCIACIÓN DE COOPERATIVAS ARGENTINAS',M+36,10);
 
-    // Tipo de documento
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(15);
+    doc.setTextColor(255,255,255);
+    doc.text('AFA San Carlos Centro',M+36,18);
+
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.setTextColor(245,158,11);
+    doc.text('INGENIERÍA AGRONÓMICA',M+36,25);
+
+    // Fecha (derecha)
+    const fechaStr=fecha?new Date(fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'}):new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
+    doc.setTextColor(180,220,195);
+    doc.text('Fecha:',W-M,10,{align:'right'});
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(255,255,255);
+    doc.text(fechaStr,W-M,15,{align:'right'});
+    // Pill campaña
+    doc.setFillColor(245,158,11);
+    doc.roundedRect(W-M-28,20,28,7,2,2,'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(8);
+    doc.setTextColor(255,255,255);
+    doc.text('Campaña '+(campana||'—'),W-M-14,24.5,{align:'center'});
+
+    y=50;
+
+    // ── TÍTULO DOCUMENTO ──
+    doc.setFillColor(240,249,244);
+    doc.rect(0,y,W,14,'F');
+    doc.setDrawColor(208,232,216);
+    doc.setLineWidth(0.3);
+    doc.line(0,y+14,W,y+14);
     doc.setFont('helvetica','bold');
     doc.setFontSize(13);
-    doc.setTextColor(253,211,77);
-    doc.text('INFORME DE CULTIVO',M,30);
-
-    // Fecha en el header (derecha)
-    const fechaHoy=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+    doc.setTextColor(26,102,64);
+    doc.text('INFORME TÉCNICO DE ESTADO DE CULTIVO',M,y+6.5);
     doc.setFont('helvetica','normal');
     doc.setFontSize(9);
-    doc.setTextColor(200,230,210);
-    doc.text(fechaHoy,W-M,30,{align:'right'});
+    doc.setTextColor(85,85,85);
+    const totalHas=lotes.reduce((s,l)=>{const n=parseFloat(l.has);return s+(isNaN(n)?0:n);},0);
+    const subtitulo=`Cultivo: ${cultivo}   ·   Productor: ${productor}${totalHas>0?'   ·   Total: '+totalHas.toLocaleString('es-AR',{maximumFractionDigits:1})+' ha':''}`;
+    doc.text(subtitulo,M,y+11.5);
 
-    y=48;
+    y+=20;
 
-    // ── BLOQUE DATOS PRINCIPALES ──
-    doc.setFillColor(20,40,28);
-    doc.roundedRect(M,y,W-2*M,36,3,3,'F');
-    doc.setDrawColor(46,170,110);
-    doc.setLineWidth(0.5);
-    doc.roundedRect(M,y,W-2*M,36,3,3,'S');
-
-    // Productor
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(9);
-    doc.setTextColor(46,170,110);
-    doc.text('PRODUCTOR',M+6,y+8);
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(14);
-    doc.setTextColor(255,255,255);
-    doc.text(productor.toUpperCase(),M+6,y+16);
-
-    // Grid datos: cultivo, campaña, has
-    const colW=(W-2*M-12)/3;
-    [[cultivo.toUpperCase(),'CULTIVO'],[campana||'—','CAMPAÑA'],[has?(has+' ha'):'—','HECTÁREAS']].forEach(([val,lbl],i)=>{
-      const cx=M+6+i*(colW+6);
+    const sectionHeader=(num,title)=>{
+      if(y+12>280){doc.addPage();y=16;}
+      // Pill número
+      doc.setFillColor(26,102,64);
+      doc.roundedRect(M,y-4,7,7,1.5,1.5,'F');
       doc.setFont('helvetica','bold');
       doc.setFontSize(8);
-      doc.setTextColor(150,150,150);
-      doc.text(lbl,cx,y+24);
-      doc.setFont('helvetica','bold');
-      doc.setFontSize(12);
-      doc.setTextColor(253,211,77);
-      doc.text(val,cx,y+31);
-    });
-
-    y+=44;
-
-    // ── ESTADO DEL CULTIVO ──
-    if(estado){
-      doc.setFont('helvetica','bold');
-      doc.setFontSize(10);
-      doc.setTextColor(46,170,110);
-      doc.text('ESTADO DEL CULTIVO',M,y);
-      doc.setLineWidth(0.3);
-      doc.setDrawColor(46,170,110);
-      doc.line(M,y+1.5,W-M,y+1.5);
-      y+=7;
-
-      doc.setFont('helvetica','normal');
-      doc.setFontSize(10);
-      doc.setTextColor(40,40,40);
-      const lines=doc.splitTextToSize(estado,W-2*M);
-      doc.text(lines,M,y);
-      y+=lines.length*5+6;
-    }
-
-    // ── IMÁGENES ──
-    const imgs=[];
-    for(let n=1;n<=4;n++){
-      const inp=document.getElementById('infImg'+n);
-      const cap=document.getElementById('infCaption'+n).value.trim();
-      if(inp.files&&inp.files[0]){
-        const dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(inp.files[0]);});
-        imgs.push({dataUrl,caption:cap});
-      }
-    }
-
-    if(imgs.length){
+      doc.setTextColor(255,255,255);
+      doc.text(String(num),M+3.5,y+0.5,{align:'center'});
       // Título sección
       doc.setFont('helvetica','bold');
       doc.setFontSize(10);
-      doc.setTextColor(46,170,110);
-      doc.text('REGISTRO FOTOGRÁFICO',M,y);
-      doc.setLineWidth(0.3);
-      doc.setDrawColor(46,170,110);
-      doc.line(M,y+1.5,W-M,y+1.5);
-      y+=7;
+      doc.setTextColor(26,102,64);
+      doc.text(title,M+10,y);
+      // Línea
+      doc.setLineWidth(0.25);
+      doc.setDrawColor(26,102,64);
+      doc.line(M+10,y+1.5,W-M,y+1.5);
+      y+=8;
+    };
 
-      const imgW=(W-2*M-6)/2; // 2 cols con gap 6
-      const imgH=52;
+    // ── 1. OBJETO ──
+    if(objeto){
+      sectionHeader(1,'OBJETO');
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(10);
+      doc.setTextColor(50,50,50);
+      const lines=doc.splitTextToSize(objeto,W-2*M-10);
+      doc.text(lines,M+8,y);
+      y+=lines.length*5+8;
+    }
 
+    // ── 2. LOTES ──
+    if(lotes.length){
+      sectionHeader(2,'LOTES Y VARIEDADES RELEVADOS');
+      // Tabla
+      const cW=[50,80,W-2*M-8-50-80];
+      const headers=['LOTE','VARIEDAD / CULTIVAR','SUPERFICIE'];
+      // Header tabla
+      doc.setFillColor(26,102,64);
+      doc.rect(M+8,y,W-2*M-8,8,'F');
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(8);
+      doc.setTextColor(255,255,255);
+      let cx=M+10;
+      headers.forEach((h,i)=>{
+        doc.text(h,cx+(i===2?cW[i]/2:0),y+5.5,{align:i===2?'center':'left'});
+        cx+=cW[i];
+      });
+      y+=8;
+      lotes.forEach((l,idx)=>{
+        if(y+8>280){doc.addPage();y=16;}
+        doc.setFillColor(idx%2===0?248:255,idx%2===0?253:255,idx%2===0?250:255);
+        doc.rect(M+8,y,W-2*M-8,7.5,'F');
+        doc.setDrawColor(208,232,216);
+        doc.setLineWidth(0.2);
+        doc.line(M+8,y+7.5,W-2*M+8+M+8,y+7.5);
+        doc.setFont('helvetica','normal');
+        doc.setFontSize(9.5);
+        doc.setTextColor(50,50,50);
+        cx=M+10;
+        [l.nombre,l.variedad,l.has].forEach((v,i)=>{
+          doc.text(String(v),cx+(i===2?cW[i]/2:0),y+5,{align:i===2?'center':'left',maxWidth:cW[i]-4});
+          cx+=cW[i];
+        });
+        y+=7.5;
+      });
+      if(totalHas>0){
+        doc.setFillColor(232,245,238);
+        doc.rect(M+8,y,W-2*M-8,7.5,'F');
+        doc.setFont('helvetica','bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(26,102,64);
+        doc.text('TOTAL:',M+10+(cW[0]+cW[1])-4,y+5,{align:'right'});
+        doc.text(totalHas.toLocaleString('es-AR',{maximumFractionDigits:1})+' ha',M+10+cW[0]+cW[1]+cW[2]/2,y+5,{align:'center'});
+        y+=7.5;
+      }
+      y+=8;
+    }
+
+    // ── 3. ESTADO ──
+    if(estado){
+      sectionHeader(3,'ESTADO DEL CULTIVO');
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(10);
+      doc.setTextColor(50,50,50);
+      const lines=doc.splitTextToSize(estado,W-2*M-10);
+      if(y+lines.length*5+6>280){doc.addPage();y=16;}
+      doc.text(lines,M+8,y);
+      y+=lines.length*5+8;
+    }
+
+    // ── FOTOS ──
+    if(imgs.length){
+      if(y+10>260){doc.addPage();y=16;}
+      // Pill foto
+      doc.setFillColor(245,158,11);
+      doc.roundedRect(M,y-4,7,7,1.5,1.5,'F');
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(8);
+      doc.setTextColor(255,255,255);
+      doc.text('📷',M+3.5,y+0.5,{align:'center'});
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(10);
+      doc.setTextColor(26,102,64);
+      doc.text('REGISTRO FOTOGRÁFICO',M+10,y);
+      doc.setLineWidth(0.25);
+      doc.setDrawColor(26,102,64);
+      doc.line(M+10,y+1.5,W-M,y+1.5);
+      y+=8;
+
+      const imgW=(W-2*M-8-6)/2;
+      const imgH=50;
       for(let i=0;i<imgs.length;i++){
         const col=i%2;
         if(col===0&&i>0)y+=imgH+(imgs[i-2]?.caption?10:6);
-        if(y+imgH+14>290){doc.addPage();y=18;}
-        const x=M+col*(imgW+6);
+        if(y+imgH+14>280){doc.addPage();y=16;}
+        const x=M+8+col*(imgW+6);
         try{
           doc.addImage(imgs[i].dataUrl,'JPEG',x,y,imgW,imgH);
-          // Borde
           doc.setDrawColor(200,200,200);
-          doc.setLineWidth(0.3);
+          doc.setLineWidth(0.2);
           doc.rect(x,y,imgW,imgH,'S');
         }catch(e){}
         if(imgs[i].caption){
           doc.setFont('helvetica','italic');
           doc.setFontSize(8);
-          doc.setTextColor(80,80,80);
+          doc.setTextColor(100,100,100);
           doc.text(imgs[i].caption,x+imgW/2,y+imgH+4,{align:'center',maxWidth:imgW});
         }
       }
-      // Avanzar Y después de última fila de imágenes
-      const lastRowStart=imgs.length%2===0?imgs.length-2:imgs.length-1;
       const lastCap=imgs[imgs.length-1]?.caption;
-      y+=imgH+(lastCap?10:6);
+      y+=imgH+(lastCap?12:6)+6;
     }
 
-    // ── OBSERVACIONES ──
+    // ── 4. CONCLUSIONES ──
     if(obs){
-      if(y+20>290){doc.addPage();y=18;}
-      doc.setFont('helvetica','bold');
-      doc.setFontSize(10);
-      doc.setTextColor(46,170,110);
-      doc.text('OBSERVACIONES Y CONCLUSIONES',M,y);
-      doc.setLineWidth(0.3);
-      doc.setDrawColor(46,170,110);
-      doc.line(M,y+1.5,W-M,y+1.5);
-      y+=7;
-
+      if(y+10>280){doc.addPage();y=16;}
+      sectionHeader(4,'CONCLUSIÓN');
       doc.setFont('helvetica','normal');
       doc.setFontSize(10);
-      doc.setTextColor(40,40,40);
-      const obsLines=doc.splitTextToSize(obs,W-2*M);
-      // Página extra si no entra
-      if(y+obsLines.length*5+8>282){doc.addPage();y=18;}
-      doc.text(obsLines,M,y);
-      y+=obsLines.length*5+8;
+      doc.setTextColor(50,50,50);
+      const lines=doc.splitTextToSize(obs,W-2*M-10);
+      if(y+lines.length*5+6>280){doc.addPage();y=16;}
+      doc.text(lines,M+8,y);
+      y+=lines.length*5+10;
     }
 
     // ── FIRMA ──
-    if(y+28>290){doc.addPage();y=18;}
-    // Línea separadora
+    const needsPage=y+32>285;
+    if(needsPage){doc.addPage();y=260;}else{if(y<260)y=260;}
     doc.setLineWidth(0.3);
-    doc.setDrawColor(200,200,200);
-    doc.line(W-M-60,y,W-M,y);
+    doc.setDrawColor(26,102,64);
+    doc.line(W-M-58,y,W-M,y);
     y+=5;
     doc.setFont('helvetica','bold');
     doc.setFontSize(10);
@@ -2761,33 +3064,85 @@ async function generarInformePDF(){
     y+=5;
     doc.setFont('helvetica','normal');
     doc.setFontSize(9);
-    doc.setTextColor(80,80,80);
+    doc.setTextColor(90,90,90);
     doc.text('M.P. 82-1-1075',W-M,y,{align:'right'});
 
-    // ── PIE DE PÁGINA ──
+    // ── PIE CADA PÁGINA ──
     const totalPages=doc.internal.getNumberOfPages();
     for(let p=1;p<=totalPages;p++){
       doc.setPage(p);
+      // Barra dorada inferior
+      doc.setFillColor(245,158,11);
+      doc.rect(0,285,W,3,'F');
+      // Pie verde
       doc.setFillColor(26,102,64);
-      doc.rect(0,287,W,10,'F');
+      doc.rect(0,288,W,9,'F');
       doc.setFont('helvetica','normal');
       doc.setFontSize(7);
-      doc.setTextColor(200,230,210);
-      doc.text('AFA San Carlos Centro · Informe de Cultivo · Campaña '+(campana||'—'),M,293);
+      doc.setTextColor(180,220,195);
+      doc.text('AFA San Carlos Centro · Informe Técnico de Estado de Cultivo · Campaña '+(campana||'—'),M,293);
       doc.text('Pág. '+p+'/'+totalPages,W-M,293,{align:'right'});
     }
 
-    // Descargar
-    const fname=`Informe-${cultivo}-${(productor.split(',')[0]||'productor').replace(/\s+/g,'-')}-${campana||'campana'}.pdf`.toLowerCase().replace(/[^a-z0-9\-\.]/g,'_');
+    const safeProductor=(productor.split(',')[0]||'productor').replace(/\s+/g,'-').toLowerCase().replace(/[^a-z0-9\-]/g,'');
+    const fname=`Informe-${cultivo.replace(/\s/g,'-').toLowerCase()}-${safeProductor}-${campana||'campana'}.pdf`;
     doc.save(fname);
     toast('✓ PDF generado y descargado');
   }catch(e){
     console.error(e);
     toast('Error al generar PDF: '+e.message);
   }finally{
-    btn.textContent='📄 Generar y Descargar PDF';btn.disabled=false;
+    btn.textContent='📄 Generar PDF';btn.disabled=false;
   }
 }
+
+async function generarImagenInforme(){
+  const productor=document.getElementById('infProductor').value;
+  const cultivo=document.getElementById('infCultivo').value;
+  const campana=document.getElementById('infCampana').value.trim();
+  const fecha=document.getElementById('infFecha').value;
+  const objeto=document.getElementById('infObjeto').value.trim();
+  const estado=document.getElementById('infEstado').value.trim();
+  const obs=document.getElementById('infObs').value.trim();
+  const lotes=getInfLotes();
+
+  if(!productor){toast('Seleccioná un productor');return;}
+  if(!cultivo){toast('Seleccioná un cultivo');return;}
+
+  const btn=document.getElementById('btnInformeImg');
+  btn.textContent='⏳ Generando...';btn.disabled=true;
+
+  try{
+    const imgs=await getInfImgsData();
+    const card=document.getElementById('infCard');
+    card.innerHTML=buildInfCardHTML({productor,cultivo,campana,fecha,objeto,lotes,estado,imgs,obs});
+    // Mover a pantalla para html2canvas
+    card.style.left='0px';
+    await new Promise(r=>setTimeout(r,300));
+    const canvas=await html2canvas(card,{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false});
+    card.style.left='-9999px';
+    const dataUrl=canvas.toDataURL('image/png',1.0);
+    const fname=`Informe-${cultivo.replace(/\s/g,'-').toLowerCase()}-${(productor.split(',')[0]||'productor').replace(/\s+/g,'_').toLowerCase()}-${campana||'campana'}.png`;
+    // Descargar
+    const a=document.createElement('a');
+    a.href=dataUrl;a.download=fname;a.click();
+    // Compartir si disponible
+    if(navigator.share&&navigator.canShare){
+      const blob=await(await fetch(dataUrl)).blob();
+      const file=new File([blob],fname,{type:'image/png'});
+      if(navigator.canShare({files:[file]})){
+        try{await navigator.share({files:[file],title:'Informe de Cultivo',text:`Informe ${cultivo} - ${productor} - Campaña ${campana||''}`});}catch(e){}
+      }
+    }
+    toast('✓ Imagen generada y descargada');
+  }catch(e){
+    console.error(e);
+    toast('Error al generar imagen: '+e.message);
+  }finally{
+    btn.textContent='🖼️ Generar Imagen PNG';btn.disabled=false;
+  }
+}
+
 
 // ══ INIT ══
 async function init(){
