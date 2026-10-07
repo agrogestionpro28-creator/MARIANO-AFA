@@ -6,6 +6,7 @@
 <title>AFA — Gestión</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
@@ -262,6 +263,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <button class="hn" id="nav-graficos" onclick="showView('graficos',this)">📈 Gráficos</button>
     <button class="hn" id="nav-condiciones" onclick="showView('condiciones',this)">📋 Condiciones</button>
     <button class="hn" id="nav-agenda" onclick="showView('agenda',this)">📌 Agenda</button>
+    <button class="hn" id="nav-informes" onclick="showView('informes',this)">📄 Informes</button>
     <button class="hn" id="nav-alertas" onclick="showAlertas()" style="position:relative;">
       🔔 <span id="alertaBell" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:white;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;" id="alertaCount">0</span>
     </button>
@@ -628,6 +630,103 @@ tr:hover td{background:rgba(255,255,255,.02);}
   </div>
 </div>
 
+<!-- VISTA INFORMES -->
+<div id="v-informes" class="view">
+  <div style="max-width:720px;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:28px;color:white;margin:0;">📄 Informe de Cultivo</h2>
+        <p style="color:rgba(255,255,255,.4);font-size:13px;margin:4px 0 0;">Generá y descargá el informe en PDF</p>
+      </div>
+    </div>
+
+    <!-- FORMULARIO -->
+    <div style="background:linear-gradient(145deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-radius:16px;padding:20px 24px;display:grid;gap:14px;">
+
+      <!-- Productor -->
+      <div>
+        <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Productor</label>
+        <select id="infProductor" style="width:100%;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;">
+          <option value="">— Seleccionar —</option>
+        </select>
+      </div>
+
+      <!-- Cultivo + Campaña + Has -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+        <div>
+          <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Cultivo</label>
+          <select id="infCultivo" style="width:100%;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;">
+            <option value="Trigo">Trigo</option>
+            <option value="Girasol">Girasol</option>
+            <option value="Maíz">Maíz</option>
+            <option value="Sorgo">Sorgo</option>
+            <option value="Soja">Soja</option>
+            <option value="Maíz 2°">Maíz 2°</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Campaña</label>
+          <input id="infCampana" type="text" placeholder="ej: 26/27" value="26/27" style="width:100%;box-sizing:border-box;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Hectáreas</label>
+          <input id="infHas" type="number" placeholder="ej: 150" style="width:100%;box-sizing:border-box;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;">
+        </div>
+      </div>
+
+      <!-- Estado del cultivo -->
+      <div>
+        <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Estado del cultivo / Descripción general</label>
+        <textarea id="infEstado" rows="4" placeholder="Describí la situación actual: fechas de siembra por lote, stand de plantas, estado fenológico, incidencia de plagas/enfermedades, lluvias recientes, etc." style="width:100%;box-sizing:border-box;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;resize:vertical;min-height:100px;"></textarea>
+      </div>
+
+      <!-- Imágenes -->
+      <div>
+        <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:8px;">Imágenes (máx. 4)</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="infImgsGrid">
+          <!-- img 1 -->
+          <div style="background:rgba(255,255,255,.03);border:1.5px dashed var(--border2);border-radius:10px;padding:12px;">
+            <input type="file" id="infImg1" accept="image/*" onchange="previewInfImg(1)" style="font-size:12px;color:rgba(255,255,255,.5);width:100%;">
+            <img id="infPreview1" style="display:none;width:100%;border-radius:7px;margin-top:8px;max-height:140px;object-fit:cover;">
+            <input id="infCaption1" type="text" placeholder="Epígrafe (opcional)" style="margin-top:6px;width:100%;box-sizing:border-box;padding:6px 9px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:'Barlow',sans-serif;color:white;outline:none;">
+          </div>
+          <!-- img 2 -->
+          <div style="background:rgba(255,255,255,.03);border:1.5px dashed var(--border2);border-radius:10px;padding:12px;">
+            <input type="file" id="infImg2" accept="image/*" onchange="previewInfImg(2)" style="font-size:12px;color:rgba(255,255,255,.5);width:100%;">
+            <img id="infPreview2" style="display:none;width:100%;border-radius:7px;margin-top:8px;max-height:140px;object-fit:cover;">
+            <input id="infCaption2" type="text" placeholder="Epígrafe (opcional)" style="margin-top:6px;width:100%;box-sizing:border-box;padding:6px 9px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:'Barlow',sans-serif;color:white;outline:none;">
+          </div>
+          <!-- img 3 -->
+          <div style="background:rgba(255,255,255,.03);border:1.5px dashed var(--border2);border-radius:10px;padding:12px;">
+            <input type="file" id="infImg3" accept="image/*" onchange="previewInfImg(3)" style="font-size:12px;color:rgba(255,255,255,.5);width:100%;">
+            <img id="infPreview3" style="display:none;width:100%;border-radius:7px;margin-top:8px;max-height:140px;object-fit:cover;">
+            <input id="infCaption3" type="text" placeholder="Epígrafe (opcional)" style="margin-top:6px;width:100%;box-sizing:border-box;padding:6px 9px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:'Barlow',sans-serif;color:white;outline:none;">
+          </div>
+          <!-- img 4 -->
+          <div style="background:rgba(255,255,255,.03);border:1.5px dashed var(--border2);border-radius:10px;padding:12px;">
+            <input type="file" id="infImg4" accept="image/*" onchange="previewInfImg(4)" style="font-size:12px;color:rgba(255,255,255,.5);width:100%;">
+            <img id="infPreview4" style="display:none;width:100%;border-radius:7px;margin-top:8px;max-height:140px;object-fit:cover;">
+            <input id="infCaption4" type="text" placeholder="Epígrafe (opcional)" style="margin-top:6px;width:100%;box-sizing:border-box;padding:6px 9px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:7px;font-size:12px;font-family:'Barlow',sans-serif;color:white;outline:none;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Observaciones -->
+      <div>
+        <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Observaciones y Conclusiones</label>
+        <textarea id="infObs" rows="4" placeholder="Recomendaciones, observaciones finales, próximas acciones a tomar, etc." style="width:100%;box-sizing:border-box;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;resize:vertical;min-height:100px;"></textarea>
+      </div>
+
+      <!-- Botón -->
+      <div style="display:flex;justify-content:flex-end;padding-top:4px;">
+        <button class="btn btn-primary" onclick="generarInformePDF()" id="btnInforme" style="font-size:15px;padding:12px 28px;">
+          📄 Generar y Descargar PDF
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- TARJETA COSECHA OCULTA -->
 <div id="cosCard" style="position:fixed;left:-9999px;top:0;width:520px;font-family:'Barlow',sans-serif;overflow:hidden;border-radius:0;">
 
@@ -905,6 +1004,7 @@ function showView(v,btn){
   if(v==='ventas'){renderVentas();if(graficosVisible)renderGraficos();}
   if(v==='graficos')renderGraficosPanel();
   if(v==='condiciones')renderCondiciones();
+  if(v==='informes')initInformes();
 }
 
 // ══ MAPEO ══
@@ -2447,6 +2547,246 @@ function generarRepartoDesdeModal(){
       },'image/png');
     });
   },150);
+}
+
+// ══ INFORMES PDF ══
+function initInformes(){
+  const sel=document.getElementById('infProductor');
+  if(sel){
+    sel.innerHTML='<option value="">— Seleccionar —</option>'+
+      clientes.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(c=>`<option value="${c.nombre}">${c.nombre}</option>`).join('');
+  }
+}
+
+function previewInfImg(n){
+  const input=document.getElementById('infImg'+n);
+  const preview=document.getElementById('infPreview'+n);
+  const file=input.files[0];
+  if(!file){preview.style.display='none';return;}
+  const reader=new FileReader();
+  reader.onload=e=>{preview.src=e.target.result;preview.style.display='block';};
+  reader.readAsDataURL(file);
+}
+
+async function generarInformePDF(){
+  const productor=document.getElementById('infProductor').value;
+  const cultivo=document.getElementById('infCultivo').value;
+  const campana=document.getElementById('infCampana').value.trim();
+  const has=document.getElementById('infHas').value.trim();
+  const estado=document.getElementById('infEstado').value.trim();
+  const obs=document.getElementById('infObs').value.trim();
+
+  if(!productor){toast('Seleccioná un productor');return;}
+  if(!cultivo){toast('Seleccioná un cultivo');return;}
+
+  const btn=document.getElementById('btnInforme');
+  btn.textContent='⏳ Generando...';btn.disabled=true;
+
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210,M=18;
+    let y=0;
+
+    // ── HEADER VERDE AFA ──
+    doc.setFillColor(26,102,64); // #1a6640
+    doc.rect(0,0,W,38,'F');
+
+    // Línea decorativa dorada
+    doc.setFillColor(245,158,11); // --gold
+    doc.rect(0,36,W,2,'F');
+
+    // Título AFA
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(22);
+    doc.setTextColor(255,255,255);
+    doc.text('AFA — San Carlos Centro',M,14);
+
+    // Subtítulo
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(10);
+    doc.setTextColor(200,230,210);
+    doc.text('Asociación de Cooperativas Argentinas · Ingeniería Agronómica',M,21);
+
+    // Tipo de documento
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(13);
+    doc.setTextColor(253,211,77);
+    doc.text('INFORME DE CULTIVO',M,30);
+
+    // Fecha en el header (derecha)
+    const fechaHoy=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(200,230,210);
+    doc.text(fechaHoy,W-M,30,{align:'right'});
+
+    y=48;
+
+    // ── BLOQUE DATOS PRINCIPALES ──
+    doc.setFillColor(20,40,28);
+    doc.roundedRect(M,y,W-2*M,36,3,3,'F');
+    doc.setDrawColor(46,170,110);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(M,y,W-2*M,36,3,3,'S');
+
+    // Productor
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.setTextColor(46,170,110);
+    doc.text('PRODUCTOR',M+6,y+8);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(14);
+    doc.setTextColor(255,255,255);
+    doc.text(productor.toUpperCase(),M+6,y+16);
+
+    // Grid datos: cultivo, campaña, has
+    const colW=(W-2*M-12)/3;
+    [[cultivo.toUpperCase(),'CULTIVO'],[campana||'—','CAMPAÑA'],[has?(has+' ha'):'—','HECTÁREAS']].forEach(([val,lbl],i)=>{
+      const cx=M+6+i*(colW+6);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(8);
+      doc.setTextColor(150,150,150);
+      doc.text(lbl,cx,y+24);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(12);
+      doc.setTextColor(253,211,77);
+      doc.text(val,cx,y+31);
+    });
+
+    y+=44;
+
+    // ── ESTADO DEL CULTIVO ──
+    if(estado){
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(10);
+      doc.setTextColor(46,170,110);
+      doc.text('ESTADO DEL CULTIVO',M,y);
+      doc.setLineWidth(0.3);
+      doc.setDrawColor(46,170,110);
+      doc.line(M,y+1.5,W-M,y+1.5);
+      y+=7;
+
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(10);
+      doc.setTextColor(40,40,40);
+      const lines=doc.splitTextToSize(estado,W-2*M);
+      doc.text(lines,M,y);
+      y+=lines.length*5+6;
+    }
+
+    // ── IMÁGENES ──
+    const imgs=[];
+    for(let n=1;n<=4;n++){
+      const inp=document.getElementById('infImg'+n);
+      const cap=document.getElementById('infCaption'+n).value.trim();
+      if(inp.files&&inp.files[0]){
+        const dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(inp.files[0]);});
+        imgs.push({dataUrl,caption:cap});
+      }
+    }
+
+    if(imgs.length){
+      // Título sección
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(10);
+      doc.setTextColor(46,170,110);
+      doc.text('REGISTRO FOTOGRÁFICO',M,y);
+      doc.setLineWidth(0.3);
+      doc.setDrawColor(46,170,110);
+      doc.line(M,y+1.5,W-M,y+1.5);
+      y+=7;
+
+      const imgW=(W-2*M-6)/2; // 2 cols con gap 6
+      const imgH=52;
+
+      for(let i=0;i<imgs.length;i++){
+        const col=i%2;
+        if(col===0&&i>0)y+=imgH+(imgs[i-2]?.caption?10:6);
+        if(y+imgH+14>290){doc.addPage();y=18;}
+        const x=M+col*(imgW+6);
+        try{
+          doc.addImage(imgs[i].dataUrl,'JPEG',x,y,imgW,imgH);
+          // Borde
+          doc.setDrawColor(200,200,200);
+          doc.setLineWidth(0.3);
+          doc.rect(x,y,imgW,imgH,'S');
+        }catch(e){}
+        if(imgs[i].caption){
+          doc.setFont('helvetica','italic');
+          doc.setFontSize(8);
+          doc.setTextColor(80,80,80);
+          doc.text(imgs[i].caption,x+imgW/2,y+imgH+4,{align:'center',maxWidth:imgW});
+        }
+      }
+      // Avanzar Y después de última fila de imágenes
+      const lastRowStart=imgs.length%2===0?imgs.length-2:imgs.length-1;
+      const lastCap=imgs[imgs.length-1]?.caption;
+      y+=imgH+(lastCap?10:6);
+    }
+
+    // ── OBSERVACIONES ──
+    if(obs){
+      if(y+20>290){doc.addPage();y=18;}
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(10);
+      doc.setTextColor(46,170,110);
+      doc.text('OBSERVACIONES Y CONCLUSIONES',M,y);
+      doc.setLineWidth(0.3);
+      doc.setDrawColor(46,170,110);
+      doc.line(M,y+1.5,W-M,y+1.5);
+      y+=7;
+
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(10);
+      doc.setTextColor(40,40,40);
+      const obsLines=doc.splitTextToSize(obs,W-2*M);
+      // Página extra si no entra
+      if(y+obsLines.length*5+8>282){doc.addPage();y=18;}
+      doc.text(obsLines,M,y);
+      y+=obsLines.length*5+8;
+    }
+
+    // ── FIRMA ──
+    if(y+28>290){doc.addPage();y=18;}
+    // Línea separadora
+    doc.setLineWidth(0.3);
+    doc.setDrawColor(200,200,200);
+    doc.line(W-M-60,y,W-M,y);
+    y+=5;
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(10);
+    doc.setTextColor(26,102,64);
+    doc.text('Ing. Agr. Mariano J. Bertaina',W-M,y,{align:'right'});
+    y+=5;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(80,80,80);
+    doc.text('M.P. 82-1-1075',W-M,y,{align:'right'});
+
+    // ── PIE DE PÁGINA ──
+    const totalPages=doc.internal.getNumberOfPages();
+    for(let p=1;p<=totalPages;p++){
+      doc.setPage(p);
+      doc.setFillColor(26,102,64);
+      doc.rect(0,287,W,10,'F');
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(7);
+      doc.setTextColor(200,230,210);
+      doc.text('AFA San Carlos Centro · Informe de Cultivo · Campaña '+(campana||'—'),M,293);
+      doc.text('Pág. '+p+'/'+totalPages,W-M,293,{align:'right'});
+    }
+
+    // Descargar
+    const fname=`Informe-${cultivo}-${(productor.split(',')[0]||'productor').replace(/\s+/g,'-')}-${campana||'campana'}.pdf`.toLowerCase().replace(/[^a-z0-9\-\.]/g,'_');
+    doc.save(fname);
+    toast('✓ PDF generado y descargado');
+  }catch(e){
+    console.error(e);
+    toast('Error al generar PDF: '+e.message);
+  }finally{
+    btn.textContent='📄 Generar y Descargar PDF';btn.disabled=false;
+  }
 }
 
 // ══ INIT ══
