@@ -647,8 +647,8 @@ tr:hover td{background:rgba(255,255,255,.02);}
       <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;">
         <div>
           <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Productor</label>
-          <select id="infProductor" style="width:100%;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;">
-            <option value="">— Seleccionar —</option>
+          <select id="infProductor" style="width:100%;padding:10px 12px;background:#1e2a22;border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;">
+            <option value="" style="background:#1e2a22;color:white;">— Seleccionar —</option>
           </select>
         </div>
         <div>
@@ -661,13 +661,13 @@ tr:hover td{background:rgba(255,255,255,.02);}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div>
           <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:5px;">Cultivo</label>
-          <select id="infCultivo" style="width:100%;padding:10px 12px;background:rgba(255,255,255,.06);border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;">
-            <option value="Trigo">Trigo</option>
-            <option value="Girasol">Girasol</option>
-            <option value="Maíz">Maíz</option>
-            <option value="Sorgo">Sorgo</option>
-            <option value="Soja">Soja</option>
-            <option value="Maíz 2°">Maíz 2°</option>
+          <select id="infCultivo" style="width:100%;padding:10px 12px;background:#1e2a22;border:1.5px solid var(--border2);border-radius:9px;font-size:14px;font-family:'Barlow',sans-serif;color:white;outline:none;">
+            <option value="Trigo" style="background:#1e2a22;color:white;">Trigo</option>
+            <option value="Girasol" style="background:#1e2a22;color:white;">Girasol</option>
+            <option value="Maíz" style="background:#1e2a22;color:white;">Maíz</option>
+            <option value="Sorgo" style="background:#1e2a22;color:white;">Sorgo</option>
+            <option value="Soja" style="background:#1e2a22;color:white;">Soja</option>
+            <option value="Maíz 2°" style="background:#1e2a22;color:white;">Maíz 2°</option>
           </select>
         </div>
         <div>
@@ -2601,8 +2601,8 @@ const AFA_LOGO_B64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQYAAACTCAYA
 function initInformes(){
   const sel=document.getElementById('infProductor');
   if(sel){
-    sel.innerHTML='<option value="">— Seleccionar —</option>'+
-      clientes.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(c=>`<option value="${c.nombre}">${c.nombre}</option>`).join('');
+    sel.innerHTML='<option value="" style="background:#1e2a22;color:white;">— Seleccionar —</option>'+
+      clientes.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(c=>`<option value="${c.nombre}" style="background:#1e2a22;color:white;">${c.nombre}</option>`).join('');
   }
   // Fecha por defecto hoy
   const fd=document.getElementById('infFecha');
