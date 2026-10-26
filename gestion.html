@@ -1076,7 +1076,7 @@ function calcVendidoPedidos(objetivo){
   let total=0;
   pedidos.forEach(p=>{
     const items=p.items?JSON.parse(p.items):[];
-    items.forEach(i=>{if(!i.prod)return;if(prods.some(mp=>i.prod.toLowerCase().trim()===mp))total+=+i.cant||0;});
+    items.forEach(i=>{if(!i.prod)return;if(prods.some(mp=>i.prod.toLowerCase().trim()===mp))total+=Math.max(0,(+i.cant||0)-(+i.ya_comprado||0));});
   });
   return total;
 }
@@ -1419,22 +1419,37 @@ function renderPedCard(p){
 }
 function addPedItem(item){
   pedItemCount2++;const n=pedItemCount2;
+  const yaComp=item&&item.ya_comprado?item.ya_comprado:'';
   const div=document.createElement('div');div.id=`pitem_${n}`;
-  div.style.cssText='position:relative;display:grid;grid-template-columns:1fr 80px 60px auto;gap:6px;margin-bottom:6px;align-items:start;';
+  div.style.cssText='position:relative;margin-bottom:8px;';
   div.innerHTML=`
-    <div style="position:relative;">
-      <input id="pprod_${n}" placeholder="Buscar producto..." value="${item&&item.prod?item.prod:''}" autocomplete="off"
-        data-valid="${item&&item.prod&&preciosCache.some(p=>p.name===item.prod)?'true':'false'}"
-        style="width:100%;padding:8px;background:rgba(255,255,255,.05);border:1.5px solid var(--border2);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;color:white;transition:border-color .2s;"
-        oninput="showSugg(${n});validateProd(${n})" onfocus="showSugg(${n})" onblur="setTimeout(()=>{hideSugg(${n});validateProd(${n})},200)">
-      <div id="psugg_${n}" style="display:none;position:absolute;top:100%;left:0;right:0;background:#1a1a1a;border:1.5px solid var(--gold);border-radius:0 0 8px 8px;z-index:999;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.6);"></div>
-      <div id="pwarn_${n}" style="display:none;font-size:10px;color:var(--gold);margin-top:2px;font-weight:600;">⚠️ Producto sin código — no descuenta del objetivo</div>
+    <div style="display:grid;grid-template-columns:1fr 80px 60px auto;gap:6px;align-items:start;">
+      <div style="position:relative;">
+        <input id="pprod_${n}" placeholder="Buscar producto..." value="${item&&item.prod?item.prod:''}" autocomplete="off"
+          data-valid="${item&&item.prod&&preciosCache.some(p=>p.name===item.prod)?'true':'false'}"
+          style="width:100%;padding:8px;background:rgba(255,255,255,.05);border:1.5px solid var(--border2);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;color:white;transition:border-color .2s;"
+          oninput="showSugg(${n});validateProd(${n})" onfocus="showSugg(${n})" onblur="setTimeout(()=>{hideSugg(${n});validateProd(${n})},200)">
+        <div id="psugg_${n}" style="display:none;position:absolute;top:100%;left:0;right:0;background:#1a1a1a;border:1.5px solid var(--gold);border-radius:0 0 8px 8px;z-index:999;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.6);"></div>
+        <div id="pwarn_${n}" style="display:none;font-size:10px;color:var(--gold);margin-top:2px;font-weight:600;">⚠️ Producto sin código — no descuenta del objetivo</div>
+      </div>
+      <input id="pcant_${n}" type="number" placeholder="Cant." value="${item&&item.cant?item.cant:''}" style="padding:8px;background:rgba(255,255,255,.05);border:1.5px solid var(--border2);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;color:white;">
+      <input id="punit_${n}" placeholder="Unid." value="${item&&item.unit?item.unit:'LTS'}" style="padding:8px;background:rgba(255,255,255,.05);border:1.5px solid var(--border2);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;color:white;">
+      <button onclick="document.getElementById('pitem_${n}').remove()" style="background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.25);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:14px;margin-top:1px;">✕</button>
     </div>
-    <input id="pcant_${n}" type="number" placeholder="Cant." value="${item&&item.cant?item.cant:''}" style="padding:8px;background:rgba(255,255,255,.05);border:1.5px solid var(--border2);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;color:white;">
-    <input id="punit_${n}" placeholder="Unid." value="${item&&item.unit?item.unit:'LTS'}" style="padding:8px;background:rgba(255,255,255,.05);border:1.5px solid var(--border2);border-radius:7px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;color:white;">
-    <button onclick="document.getElementById('pitem_${n}').remove()" style="background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.25);border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:14px;margin-top:1px;">✕</button>`;
+    <div style="display:flex;align-items:center;gap:6px;margin-top:4px;padding-left:2px;">
+      <span style="font-size:11px;color:rgba(255,255,255,.3);">↳ Ya comprado:</span>
+      <input id="pyacomp_${n}" type="number" min="0" placeholder="0" value="${yaComp}"
+        style="width:70px;padding:4px 7px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:6px;font-size:12px;font-family:'Barlow',sans-serif;outline:none;color:#f59e0b;">
+      <span id="pyacomp_lbl_${n}" style="font-size:11px;color:rgba(245,158,11,.6);display:${yaComp?'inline':'none'};">— no suma como venta nueva</span>
+    </div>`;
   document.getElementById('pedItems').appendChild(div);
   if(item&&item.prod)setTimeout(()=>validateProd(n),100);
+  // Mostrar label cuando escribe en ya_comprado
+  const yaInp=document.getElementById('pyacomp_'+n);
+  if(yaInp)yaInp.addEventListener('input',()=>{
+    const lbl=document.getElementById('pyacomp_lbl_'+n);
+    if(lbl)lbl.style.display=yaInp.value&&parseFloat(yaInp.value)>0?'inline':'none';
+  });
 }
 function validateProd(n){
   const inp=document.getElementById('pprod_'+n);const warn=document.getElementById('pwarn_'+n);
@@ -1465,7 +1480,8 @@ function hideSugg(n){const s=document.getElementById('psugg_'+n);if(s)s.style.di
 function getPedItems(){
   return[...document.getElementById('pedItems').children].map(div=>{
     const n=div.id.replace('pitem_','');
-    return{prod:document.getElementById('pprod_'+n)?.value.trim()||'',cant:document.getElementById('pcant_'+n)?.value||'',unit:document.getElementById('punit_'+n)?.value||'',valid:document.getElementById('pprod_'+n)?.dataset.valid==='true'};
+    const ya=parseFloat(document.getElementById('pyacomp_'+n)?.value)||0;
+    return{prod:document.getElementById('pprod_'+n)?.value.trim()||'',cant:document.getElementById('pcant_'+n)?.value||'',unit:document.getElementById('punit_'+n)?.value||'',valid:document.getElementById('pprod_'+n)?.dataset.valid==='true',ya_comprado:ya>0?ya:undefined};
   }).filter(i=>i.prod);
 }
 function toggleCosecha(){const v=document.getElementById('pedPago').value;document.getElementById('cosechaExtra').style.display=isCosecha(v)?'block':'none';}
@@ -1653,7 +1669,7 @@ function openDetalleFoco(id){
   if(!prods.length)prods.push(o.producto.toLowerCase());
   const rows=[];
   pedidos.forEach(p=>{const items=p.items?JSON.parse(p.items):[];items.forEach(i=>{if(!i.prod)return;
-    if(prods.some(mp=>i.prod.toLowerCase().trim()===mp))rows.push({fecha:p.fecha,cliente:p.cliente||'—',producto:i.prod,cant:+i.cant||0,unit:i.unit||o.unit,pago:p.forma_pago||'Sin definir'});});});
+    if(prods.some(mp=>i.prod.toLowerCase().trim()===mp))rows.push({fecha:p.fecha,cliente:p.cliente||'—',producto:i.prod,cant:Math.max(0,(+i.cant||0)-(+i.ya_comprado||0)),cant_total:+i.cant||0,ya_comprado:+i.ya_comprado||0,unit:i.unit||o.unit,pago:p.forma_pago||'Sin definir'});});});
   rows.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
   const vtotal=(+o.vendido_inicial||0)+rows.reduce((s,r)=>s+r.cant,0);
   const pct=o.meta>0?(vtotal/o.meta*100).toFixed(1):0;
@@ -1663,7 +1679,7 @@ function openDetalleFoco(id){
     <tr><td>${r.fecha?new Date(r.fecha+'T12:00:00').toLocaleDateString('es-AR'):'—'}</td>
     <td><strong style="color:white">${r.cliente}</strong></td>
     <td style="font-size:12px;color:rgba(255,255,255,.4);">${r.producto}</td>
-    <td class="td-num td-green"><strong>${fmtN(r.cant)}</strong> <span style="font-size:10px;color:rgba(255,255,255,.3);">${r.unit}</span></td>
+    <td class="td-num td-green"><strong>${fmtN(r.cant)}</strong> <span style="font-size:10px;color:rgba(255,255,255,.3);">${r.unit}</span>${r.ya_comprado>0?`<br><span style="font-size:10px;color:rgba(245,158,11,.6);">+${fmtN(r.ya_comprado)} ya comprado</span>`:''}</td>
     <td><span class="badge ${isCosecha(r.pago)?'badge-blue':'badge-green'}" style="font-size:10px;">${r.pago}</span></td></tr>`).join('')
     :`<tr><td colspan="5" style="text-align:center;padding:20px;color:rgba(255,255,255,.2);">Sin pedidos registrados aún</td></tr>`;
   document.getElementById('modalDetalleFoco').classList.add('open');
