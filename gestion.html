@@ -1747,9 +1747,10 @@ function buildVentasIndex(pedFilt){
   const idx={};
   (pedFilt||pedidos).forEach(p=>{const items=p.items?JSON.parse(p.items):[];items.forEach(i=>{if(!i.prod)return;
     if(!idx[i.prod])idx[i.prod]={prod:i.prod,unit:i.unit||'',totalCant:0,clientes:{}};
-    idx[i.prod].totalCant+=+i.cant||0;
+    const _cant=Math.max(0,(+i.cant||0)-(+i.ya_comprado||0));
+    idx[i.prod].totalCant+=_cant;
     if(!idx[i.prod].clientes[p.cliente])idx[i.prod].clientes[p.cliente]=[];
-    idx[i.prod].clientes[p.cliente].push({cant:+i.cant||0,fecha:p.fecha,pago:p.forma_pago||'Sin definir'});});});
+    idx[i.prod].clientes[p.cliente].push({cant:_cant,fecha:p.fecha,pago:p.forma_pago||'Sin definir'});});});
   return idx;
 }
 function clearVentasFiltros(){document.getElementById('ventasProd').value='';document.getElementById('ventasCli').value='';document.getElementById('ventasPago').value='';renderVentas();}
@@ -1763,9 +1764,10 @@ function renderVentas(){
   const idx={};
   pf.forEach(p=>{const items=p.items?JSON.parse(p.items):[];items.forEach(i=>{if(!i.prod)return;if(qP&&!i.prod.toLowerCase().includes(qP))return;
     if(!idx[i.prod])idx[i.prod]={prod:i.prod,unit:i.unit||'',totalCant:0,clientes:{}};
-    idx[i.prod].totalCant+=+i.cant||0;
+    const _c=Math.max(0,(+i.cant||0)-(+i.ya_comprado||0));
+    idx[i.prod].totalCant+=_c;
     if(!idx[i.prod].clientes[p.cliente])idx[i.prod].clientes[p.cliente]=[];
-    idx[i.prod].clientes[p.cliente].push({cant:+i.cant||0,fecha:p.fecha,pago:p.forma_pago||'Sin definir'});});});
+    idx[i.prod].clientes[p.cliente].push({cant:_c,fecha:p.fecha,pago:p.forma_pago||'Sin definir'});});});
   const prods=Object.values(idx).sort((a,b)=>b.totalCant-a.totalCant);
   document.getElementById('ventasStats').innerHTML=`
     <div class="card-stat"><div class="cs-label">Pedidos</div><div class="cs-val">${pf.length}</div></div>
@@ -2224,7 +2226,7 @@ function renderGraficosPanel(){
       if(!i.prod)return;
       const cat=prodCat[i.prod]||'Otros';
       const key=CATS.includes(cat)?cat:'Otros';
-      catIdx[key]=(catIdx[key]||0)+(+i.cant||0);
+      catIdx[key]=(catIdx[key]||0)+Math.max(0,(+i.cant||0)-(+i.ya_comprado||0));
     });
   });
 
