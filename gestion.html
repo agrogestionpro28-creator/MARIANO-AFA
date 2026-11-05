@@ -1481,7 +1481,7 @@ function getPedItems(){
   return[...document.getElementById('pedItems').children].map(div=>{
     const n=div.id.replace('pitem_','');
     const ya=parseFloat(document.getElementById('pyacomp_'+n)?.value)||0;
-    return{prod:document.getElementById('pprod_'+n)?.value.trim()||'',cant:document.getElementById('pcant_'+n)?.value||'',unit:document.getElementById('punit_'+n)?.value||'',valid:document.getElementById('pprod_'+n)?.dataset.valid==='true',ya_comprado:ya>0?ya:undefined};
+    return{prod:document.getElementById('pprod_'+n)?.value.trim()||'',cant:document.getElementById('pcant_'+n)?.value||'',unit:document.getElementById('punit_'+n)?.value||'',valid:document.getElementById('pprod_'+n)?.dataset.valid==='true',ya_comprado:ya};
   }).filter(i=>i.prod);
 }
 function toggleCosecha(){const v=document.getElementById('pedPago').value;document.getElementById('cosechaExtra').style.display=isCosecha(v)?'block':'none';}
